@@ -1,11 +1,31 @@
-import { mountElement } from "./renderer"
+import { renderer } from "./renderer"
+import { ComponentVnode, ElementVnode } from "./renderer/type"
 
-const vnode = {
-    tag: 'div',
-    props: {
-        onClick: () => console.log('clicked')
-    },
-    children: 'click me'
+// render func
+const componentVnodeFunc: ComponentVnode['tag'] = () => {
+    return {
+        tag: 'div',
+        props: {
+            onClick: () => console.log('clicked')
+        },
+        children: [
+            {
+                tag: 'span',
+                props: {},
+                children: 'son'
+            }
+        ]
+    }
 }
 
-mountElement(vnode, '#app')
+// object component vnode
+const componentVnodeObject: ComponentVnode['tag'] = {
+    render: componentVnodeFunc
+} 
+
+const vnode: ComponentVnode = {
+    // tag: componentVnodeFunc,
+    tag: componentVnodeObject
+}
+
+renderer(vnode, '#app')
