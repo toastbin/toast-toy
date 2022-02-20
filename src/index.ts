@@ -1,3 +1,4 @@
+import { effect, reactivityProxy } from "./reactivity"
 import { renderer } from "./renderer"
 import { ComponentVnode, ElementVnode } from "./renderer/type"
 
@@ -17,6 +18,17 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
         ]
     }
 }
+
+const obj = reactivityProxy<{
+    name: string
+}>({
+    name: 'taost'
+})
+
+effect(() => {
+    console.log('effect run')
+    console.log(obj.name)
+})
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
