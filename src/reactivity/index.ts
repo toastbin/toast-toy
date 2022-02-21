@@ -1,5 +1,7 @@
 // 响应系统
-const bucket: Set<Function> = new Set()
+
+// targetObj => Map<key, effectFnSet>
+const bucket: WeakMap<object, Map<string | number | symbol, Set<Function>>> = new WeakMap()
 // 存储被注册的副作用函数
 let activeEffect: Function | null = null
 const effect = (fn: Function) => {
@@ -10,14 +12,26 @@ const effect = (fn: Function) => {
 const reactivityProxy = <T extends object>(data: T): T => {
     new Proxy(data, {
         get(target, key) {
-            if (activeEffect) {
-                bucket.add(activeEffect)
+            if (!activeEffect) return
+
+            const depsMap = bucket.get(target)
+
+            if (!depsMap) {
+                depsMap.set(key, new Set())
             }
+
+            const deps = depsMap.get(key)
+            deps.add(activeEffect)
+
             return target[key]
         },
         set(target, key, newVal) {
-            bucket.forEach(fn => fn())
             target[key] = newVal
+            const depsMap = bucket.get(target)
+            
+            if (!depsMap) return
+            const effects = depsMap.get(key)
+            effects && effects.forEach(fn => fn())
             return true
         }
     })
