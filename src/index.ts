@@ -20,16 +20,25 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 }
 
 const obj = reactivityProxy<{
-    name: string
+    name: string,
+    ok: boolean
 }>({
-    name: 'taost'
+    name: 'toast',
+    ok: true,
 })
 
 effect(() => {
     console.log('effect run')
-    console.log(obj.name)
+    console.log(obj.ok ? obj.name : 'not name')
 })
 
+setTimeout(() => {
+    obj.ok = false
+}, 1000)
+
+setTimeout(() => {
+    obj.name ='asdads'
+}, 2000)
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc
