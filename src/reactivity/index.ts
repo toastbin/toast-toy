@@ -4,7 +4,7 @@
 const bucket: WeakMap<object, Map<string | number | symbol, Dep>> = new WeakMap()
 // 存储被注册的副作用函数
 let activeEffect: ReactiveEffect | null = null
-
+const effectStack: ReactiveEffect[] = []
 /** 副作用函数 */
 interface ReactiveEffect<T = any> {
     (): T
@@ -20,7 +20,13 @@ const effect = (fn: Function): unknown => {
         cleanup(effectFn)
         // 当 effectFn 执行时，将其设置为当前执行的副作用函数
         activeEffect = effectFn
+        // 先push
+        effectStack.push(activeEffect)
         fn()
+        // 执行完毕副作用函数后弹出
+        effectStack.pop()
+        // 还原
+        activeEffect = effectStack[effectStack.length - 1]
     }) as ReactiveEffect
 
     effectFn.deps = []

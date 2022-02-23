@@ -27,18 +27,35 @@ const obj = reactivityProxy<{
     ok: true,
 })
 
+// effect(() => {
+//     console.log('effect run')
+//     console.log(obj.ok ? obj.name : 'not name')
+// })
+
+// setTimeout(() => {
+//     obj.ok = false
+// }, 1000)
+
+// eg：针对不会使用到的响应式数据，副作用函数不执行
+// setTimeout(() => {
+//     obj.name ='asdads'
+// }, 2000)
+
+// eg：effect 嵌套
+// 修改外层副作用函数 name 值，不会触发外层函数执行 反而执行内层函数
 effect(() => {
-    console.log('effect run')
-    console.log(obj.ok ? obj.name : 'not name')
+    console.log('run effect outter')
+    effect(() => {
+        console.log('run effect inner')
+        console.log(obj.ok, 'ok')
+    })
+    console.log(obj.name, 'name')
 })
 
 setTimeout(() => {
-    obj.ok = false
+    obj.name = '123'
 }, 1000)
 
-setTimeout(() => {
-    obj.name ='asdads'
-}, 2000)
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc
