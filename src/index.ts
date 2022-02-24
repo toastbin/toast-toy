@@ -43,18 +43,30 @@ const obj = reactivityProxy<{
 
 // eg：effect 嵌套
 // 修改外层副作用函数 name 值，不会触发外层函数执行 反而执行内层函数
+// effect(() => {
+//     console.log('run effect outter')
+//     effect(() => {
+//         console.log('run effect inner')
+//         console.log(obj.ok, 'ok')
+//     })
+//     console.log(obj.name, 'name')
+// })
+
+// setTimeout(() => {
+//     obj.name = '123'
+// }, 1000)
+
+// 添加 scheduler options
 effect(() => {
-    console.log('run effect outter')
-    effect(() => {
-        console.log('run effect inner')
-        console.log(obj.ok, 'ok')
-    })
-    console.log(obj.name, 'name')
+    console.log(obj.name);
+}, {
+    scheduler(fn) {
+        setTimeout(fn)
+    }
 })
 
-setTimeout(() => {
-    obj.name = '123'
-}, 1000)
+obj.name = 'lhb'
+console.log('end')
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {

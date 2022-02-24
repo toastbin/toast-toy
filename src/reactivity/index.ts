@@ -9,12 +9,17 @@ const effectStack: ReactiveEffect[] = []
 interface ReactiveEffect<T = any> {
     (): T
     deps: Dep[]
+    options: ReactiveEffectOptions
 }
 
 /** 依赖的副作用函数合集 */
 type Dep = Set<ReactiveEffect>
+/** 副作用函数 options */
+interface ReactiveEffectOptions {
+    scheduler?: (job: ReactiveEffect) => void
+  }
 
-const effect = (fn: Function): unknown => {
+const effect = (fn: Function, options: ReactiveEffectOptions = {}): unknown => {
     const effectFn = (() => {
         // 每次执行副作用函数的时候，通过这个反向映射，把自己从已经存在的集合中删除
         cleanup(effectFn)
@@ -29,6 +34,8 @@ const effect = (fn: Function): unknown => {
         activeEffect = effectStack[effectStack.length - 1]
     }) as ReactiveEffect
 
+    // options 挂到 effectFn 上
+    effectFn.options = options
     effectFn.deps = []
     effectFn()
     return effect
@@ -81,7 +88,21 @@ const trigger = (target: object, key: string | number | symbol) => {
     if (!depsMap) return
     // 避免无限循环
     const effects = new Set(depsMap.get(key))
-    effects && effects.forEach(fn => fn())
+    const effectsToRun: Set<ReactiveEffect> = new Set()
+    effects && effects.forEach(fn => {
+        // 如果 trigger 触发执行的副作用函数与当前正在执行的副作用函数相同，则不执行
+        if (fn !== activeEffect) {
+            effectsToRun.add(fn)
+        }
+    })
+    effectsToRun.forEach(fn => {
+        // 如果用户传入的 scheduler 函数
+        if (fn.options.scheduler) {
+            fn.options.scheduler(fn)
+        } else {
+            fn()
+        }
+    })
 }
 
 const cleanup = (effectFn: ReactiveEffect) => {
