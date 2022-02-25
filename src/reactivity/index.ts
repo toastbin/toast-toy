@@ -17,9 +17,10 @@ type Dep = Set<ReactiveEffect>
 /** 副作用函数 options */
 interface ReactiveEffectOptions {
     scheduler?: (job: ReactiveEffect) => void
+    lazy?: boolean
   }
 
-const effect = (fn: Function, options: ReactiveEffectOptions = {}): unknown => {
+const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): ReactiveEffect<T> => {
     const effectFn = (() => {
         // 每次执行副作用函数的时候，通过这个反向映射，把自己从已经存在的集合中删除
         cleanup(effectFn)
@@ -27,18 +28,23 @@ const effect = (fn: Function, options: ReactiveEffectOptions = {}): unknown => {
         activeEffect = effectFn
         // 先push
         effectStack.push(activeEffect)
-        fn()
+        const res = fn()
         // 执行完毕副作用函数后弹出
         effectStack.pop()
         // 还原
         activeEffect = effectStack[effectStack.length - 1]
+
+        return res
     }) as ReactiveEffect
 
     // options 挂到 effectFn 上
     effectFn.options = options
     effectFn.deps = []
-    effectFn()
-    return effect
+    // 非 lazy 才直接执行
+    if (!options.lazy) {
+        effectFn()
+    }
+    return effectFn
 }
 
 /** proxy */
@@ -95,12 +101,12 @@ const trigger = (target: object, key: string | number | symbol) => {
             effectsToRun.add(fn)
         }
     })
-    effectsToRun.forEach(fn => {
+    effectsToRun.forEach(effectFn => {
         // 如果用户传入的 scheduler 函数
-        if (fn.options.scheduler) {
-            fn.options.scheduler(fn)
+        if (effectFn.options.scheduler) {
+            effectFn.options.scheduler(effectFn)
         } else {
-            fn()
+            effectFn()
         }
     })
 }
@@ -114,4 +120,4 @@ const cleanup = (effectFn: ReactiveEffect) => {
     effectFn.deps.length = 0
 }
 
-export { effect, reactivityProxy }
+export { effect, reactivityProxy, trigger, track }

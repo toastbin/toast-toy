@@ -1,4 +1,5 @@
 import { effect, reactivityProxy } from "./reactivity"
+import { computed } from "./reactivity/computed"
 import { renderer } from "./renderer"
 import { ComponentVnode, ElementVnode } from "./renderer/type"
 
@@ -57,21 +58,33 @@ const obj = reactivityProxy<{
 // }, 1000)
 
 // 添加 scheduler options
-effect(() => {
-    console.log(obj.name);
-}, {
-    scheduler(fn) {
-        setTimeout(fn)
-    }
-})
+// effect(() => {
+//     console.log(obj.name);
+// }, {
+//     scheduler(fn) {
+//         setTimeout(fn)
+//     }
+// })
 
-obj.name = 'lhb'
-console.log('end')
+// obj.name = 'lhb'
+// console.log('end')
+
+// lazy options
+const computedA = computed(() => obj.name + '111')
+console.log(computedA.value, 'computedA')
+obj.name = 'asddas'
+console.log(computedA.value, 'computedA')
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc
 } 
+// 在副作用函数中读取 computed
+effect(() => {
+    console.log(computedA.value)
+})
+// 验证是否触发上面副作用函数的响应
+obj.name = 'qwer'
 
 const vnode: ComponentVnode = {
     // tag: componentVnodeFunc,
