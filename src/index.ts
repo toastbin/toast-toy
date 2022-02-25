@@ -1,5 +1,6 @@
 import { effect, reactivityProxy } from "./reactivity"
 import { computed } from "./reactivity/computed"
+import { watch } from "./reactivity/watch"
 import { renderer } from "./renderer"
 import { ComponentVnode, ElementVnode } from "./renderer/type"
 
@@ -70,21 +71,32 @@ const obj = reactivityProxy<{
 // console.log('end')
 
 // lazy options
-const computedA = computed(() => obj.name + '111')
-console.log(computedA.value, 'computedA')
-obj.name = 'asddas'
-console.log(computedA.value, 'computedA')
+// const computedA = computed(() => obj.name + '111')
+// console.log(computedA.value, 'computedA')
+// obj.name = 'asddas'
+// console.log(computedA.value, 'computedA')
 
+// 在副作用函数中读取 computed
+// effect(() => {
+//     console.log(computedA.value)
+// })
+// 验证是否触发上面副作用函数的响应
+// obj.name = 'qwer'
+
+// watch
+watch(() => obj.name, (oldVal, newVal) => {
+    console.log('name changed')
+    console.log(oldVal, newVal)
+})
+
+setTimeout(() => {
+    obj.name = 'asdas'
+}, 1000)
+    
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc
 } 
-// 在副作用函数中读取 computed
-effect(() => {
-    console.log(computedA.value)
-})
-// 验证是否触发上面副作用函数的响应
-obj.name = 'qwer'
 
 const vnode: ComponentVnode = {
     // tag: componentVnodeFunc,
