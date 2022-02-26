@@ -87,11 +87,14 @@ const obj = reactivityProxy<{
 watch(() => obj.name, (oldVal, newVal) => {
     console.log('name changed')
     console.log(oldVal, newVal)
+}, {
+    // immediate: true
+    flush: 'pre'
 })
 
-setTimeout(() => {
-    obj.name = 'asdas'
-}, 1000)
+// setTimeout(() => {
+//     obj.name = 'asdas'
+// }, 1000)
     
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {

@@ -15,7 +15,7 @@ interface ReactiveEffect<T = any> {
 /** 依赖的副作用函数合集 */
 type Dep = Set<ReactiveEffect>
 /** 副作用函数 options */
-interface ReactiveEffectOptions {
+export interface ReactiveEffectOptions {
     scheduler?: (job: ReactiveEffect) => void
     lazy?: boolean
   }

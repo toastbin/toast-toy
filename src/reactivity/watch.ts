@@ -1,6 +1,14 @@
 import { effect } from './'
 
-const watch = (source: any, callback: (oldVal, newVal) => any) => {
+interface WatchOptions {
+    immediate?: boolean
+    // TODO pre 
+    flush?: 'post' | 'pre' | 'sync'
+    // TODO deep
+    deep?: boolean
+}
+
+const watch = (source: any, callback: (oldVal, newVal) => any, watchOptions: WatchOptions = {}) => {
     let getter: () => unknown
     if (typeof source === 'function') {
         getter = source
@@ -10,16 +18,30 @@ const watch = (source: any, callback: (oldVal, newVal) => any) => {
 
     // 旧值 新值
     let oldVal, newVal
+
+    const job = () => {
+        newVal = effectFn()
+        callback(oldVal, newVal)
+        oldVal = newVal
+    }
+
     const effectFn = effect(getter, {
         lazy: true,
-        scheduler() {
-            newVal = effectFn()
-            callback(oldVal, newVal)
-            oldVal = newVal
+        scheduler: () => {
+            // flush: post 异步延迟执行
+            if (watchOptions.flush === 'post') {
+                Promise.resolve().then(job)
+            } else {
+                job()
+            }
         }
     })
 
-    oldVal = effectFn()
+    if (watchOptions.immediate) {
+        job()
+    } else {
+        oldVal = effectFn()
+    }
 }
 
 /** 读取 proxy 内的每一个数据，建立所有数据的响应关系 */
