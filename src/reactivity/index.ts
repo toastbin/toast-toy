@@ -6,7 +6,7 @@ const bucket: WeakMap<object, Map<string | number | symbol, Dep>> = new WeakMap(
 let activeEffect: ReactiveEffect | null = null
 const effectStack: ReactiveEffect[] = []
 /** 副作用函数 */
-interface ReactiveEffect<T = any> {
+export interface ReactiveEffect<T = any> {
     (): T
     deps: Dep[]
     options: ReactiveEffectOptions
@@ -15,7 +15,7 @@ interface ReactiveEffect<T = any> {
 /** 依赖的副作用函数合集 */
 type Dep = Set<ReactiveEffect>
 /** 副作用函数 options */
-export interface ReactiveEffectOptions {
+interface ReactiveEffectOptions {
     scheduler?: (job: ReactiveEffect) => void
     lazy?: boolean
   }

@@ -1,4 +1,4 @@
-import { effect } from './'
+import { effect, ReactiveEffect } from './'
 
 interface WatchOptions {
     immediate?: boolean
@@ -8,7 +8,8 @@ interface WatchOptions {
     deep?: boolean
 }
 
-const watch = (source: any, callback: (oldVal, newVal) => any, watchOptions: WatchOptions = {}) => {
+// TODO any
+const watch = (source: any, callback: (oldVal, newVal, onInvalidate?: (fn: () => void) => void) => any, watchOptions: WatchOptions = {}) => {
     let getter: () => unknown
     if (typeof source === 'function') {
         getter = source
@@ -18,10 +19,21 @@ const watch = (source: any, callback: (oldVal, newVal) => any, watchOptions: Wat
 
     // 旧值 新值
     let oldVal, newVal
+    // 存储用户注册的过期回调
+    let cleanUp: () => void
+
+    const onInvalidate = (fn: () => void) => {
+        cleanUp = fn
+    }
 
     const job = () => {
+        debugger
         newVal = effectFn()
-        callback(oldVal, newVal)
+        // 调用回调之前 先调用 过期回调
+        if (cleanUp) {
+            cleanUp()
+        }
+        callback(oldVal, newVal, onInvalidate)
         oldVal = newVal
     }
 

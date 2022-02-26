@@ -89,7 +89,7 @@ watch(() => obj.name, (oldVal, newVal) => {
     console.log(oldVal, newVal)
 }, {
     // immediate: true
-    flush: 'pre'
+    // flush: 'post'
 })
 
 // setTimeout(() => {
