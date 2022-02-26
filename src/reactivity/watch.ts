@@ -27,7 +27,6 @@ const watch = (source: any, callback: (oldVal, newVal, onInvalidate?: (fn: () =>
     }
 
     const job = () => {
-        debugger
         newVal = effectFn()
         // 调用回调之前 先调用 过期回调
         if (cleanUp) {
