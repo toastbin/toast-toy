@@ -50,14 +50,15 @@ const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): Reac
 /** proxy */
 const reactivityProxy = <T extends object>(data: T): T => {
     return new Proxy(data, {
-        get(target, key) {
+        // receiver 总是指向原始的读操作所在的那个对象
+        get(target, key, receiver) {
             if (!activeEffect) return
             // 追踪依赖变化
             track(target, key)
-            return target[key]
+            return Reflect.get(target, key, receiver)
         },
-        set(target, key, newVal) {
-            target[key] = newVal
+        set(target, key, newVal, receiver) {
+            Reflect.set(target, key, newVal, receiver)
             trigger(target, key)
             return true
         }
