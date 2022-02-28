@@ -5,6 +5,13 @@ const bucket: WeakMap<object, Map<string | number | symbol, Dep>> = new WeakMap(
 // 存储被注册的副作用函数
 let activeEffect: ReactiveEffect | null = null
 const effectStack: ReactiveEffect[] = []
+const ITERATE_KEY = Symbol()
+
+const triggerType = {
+    UPDATE: 'UPDATE',
+    ADD: 'ADD'
+} as const
+
 /** 副作用函数 */
 export interface ReactiveEffect<T = any> {
     (): T
@@ -57,10 +64,20 @@ const reactivityProxy = <T extends object>(data: T): T => {
             track(target, key)
             return Reflect.get(target, key, receiver)
         },
+        has(targrt, key) {
+            return Reflect.has(targrt, key)
+        },
         set(target, key, newVal, receiver) {
+            const type = Object.prototype.hasOwnProperty.call(target, key)
+                ? triggerType.UPDATE
+                : triggerType.ADD
             Reflect.set(target, key, newVal, receiver)
-            trigger(target, key)
+            trigger(target, key, type)
             return true
+        },
+        ownKeys(target) {
+            track(target, ITERATE_KEY)
+            return Reflect.ownKeys(target)
         }
     })
 }
@@ -89,12 +106,13 @@ const track = (target: object, key: string | number | symbol) => {
 }
 
 /** set 函数内调用，触发副作用函数变化 */
-const trigger = (target: object, key: string | number | symbol) => {
+const trigger = (target: object, key: string | number | symbol, type: keyof typeof triggerType) => {
     const depsMap = bucket.get(target)
 
     if (!depsMap) return
     // 避免无限循环
     const effects = new Set(depsMap.get(key))
+
     const effectsToRun: Set<ReactiveEffect> = new Set()
     effects && effects.forEach(fn => {
         // 如果 trigger 触发执行的副作用函数与当前正在执行的副作用函数相同，则不执行
@@ -102,6 +120,17 @@ const trigger = (target: object, key: string | number | symbol) => {
             effectsToRun.add(fn)
         }
     })
+
+    if (type === 'ADD' ) {
+        const iterateEffects = depsMap.get(ITERATE_KEY)
+        // 添加 ITERATE_KEY 相关联的副作用函数
+        iterateEffects && iterateEffects.forEach(fn => {
+            if (fn !== activeEffect) {
+                effectsToRun.add(fn)
+            }
+        })
+    }
+
     effectsToRun.forEach(effectFn => {
         // 如果用户传入的 scheduler 函数
         if (effectFn.options.scheduler) {

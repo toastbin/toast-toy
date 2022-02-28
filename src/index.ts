@@ -24,7 +24,8 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 const obj = reactivityProxy<{
     name: string,
     ok: boolean,
-    foo: string
+    foo: string,
+    a?: number
 }>({
     name: 'toast',
     ok: true,
@@ -102,13 +103,23 @@ const obj = reactivityProxy<{
 // }, 1000)
 
 // 响应式数据中存在 getter 
+// effect(() => {
+//     console.log(obj.foo, 'foo')
+// })
+
+// setTimeout(() => {
+//     obj.name = 'lhb123'
+// }, 500)
+
+// 追踪 for ... in ...
 effect(() => {
-    console.log(obj.foo, 'foo')
+    for(const k in obj) {
+        console.log(k, 'key')
+    }
 })
 
-setTimeout(() => {
-    obj.name = 'lhb123'
-}, 500)
+obj.a = 1
+obj.a = 2
     
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
