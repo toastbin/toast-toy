@@ -120,7 +120,12 @@ effect(() => {
 
 obj.a = 1
 obj.a = 2
-    
+
+setTimeout(() => {
+    console.log('*****')
+    delete obj.foo
+}, 300)
+
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc

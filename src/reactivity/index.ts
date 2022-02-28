@@ -9,7 +9,8 @@ const ITERATE_KEY = Symbol()
 
 const triggerType = {
     UPDATE: 'UPDATE',
-    ADD: 'ADD'
+    ADD: 'ADD',
+    DELETE: 'DELETE'
 } as const
 
 /** 副作用函数 */
@@ -75,9 +76,19 @@ const reactivityProxy = <T extends object>(data: T): T => {
             trigger(target, key, type)
             return true
         },
+        // 拦截 for in 操作
         ownKeys(target) {
             track(target, ITERATE_KEY)
             return Reflect.ownKeys(target)
+        },
+        // 拦截 delete
+        deleteProperty(target, key) {
+            const hasKey = Object.prototype.hasOwnProperty.call(target, key)
+            const deleteRes = Reflect.deleteProperty(target, key)
+            if (hasKey && deleteRes) {
+                trigger(target, key, triggerType.DELETE)
+            }
+            return deleteRes
         }
     })
 }
@@ -121,7 +132,7 @@ const trigger = (target: object, key: string | number | symbol, type: keyof type
         }
     })
 
-    if (type === 'ADD' ) {
+    if (type === 'ADD' || type === 'DELETE') {
         const iterateEffects = depsMap.get(ITERATE_KEY)
         // 添加 ITERATE_KEY 相关联的副作用函数
         iterateEffects && iterateEffects.forEach(fn => {
