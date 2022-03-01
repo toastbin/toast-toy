@@ -13,6 +13,9 @@ const triggerType = {
     DELETE: 'DELETE'
 } as const
 
+/** 响应式数据通过该属性访问原始数据 */
+const __RAW__ = '__RAW__'
+
 /** 副作用函数 */
 export interface ReactiveEffect<T = any> {
     (): T
@@ -60,7 +63,8 @@ const reactivityProxy = <T extends object>(data: T): T => {
     return new Proxy(data, {
         // receiver 总是指向原始的读操作所在的那个对象
         get(target, key, receiver) {
-            if (!activeEffect) return
+            // 通过 raw 属性访问原始数据
+            if (key === __RAW__) return target
             // 追踪依赖变化
             track(target, key)
             return Reflect.get(target, key, receiver)
@@ -76,9 +80,12 @@ const reactivityProxy = <T extends object>(data: T): T => {
                 : triggerType.ADD
             const setRes = Reflect.set(target, key, newVal, receiver)
 
-            // 更新的值不一样时才触发副作用函数，保证不是 NaN
-            if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
-                trigger(target, key, type)
+            // target 等于 __RAW__ 下面的原属数据，说明当前 receiver 就是 target 的代理对象
+            if (target === receiver[__RAW__]) {
+                // 更新的值不一样时才触发副作用函数，保证不是 NaN
+                if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
+                    trigger(target, key, type)
+                }
             }
 
             return setRes
