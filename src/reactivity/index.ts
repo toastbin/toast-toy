@@ -58,8 +58,8 @@ const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): Reac
     return effectFn
 }
 
-/** proxy */
-const reactivityProxy = <T extends object>(data: T): T => {
+/** 浅 reactive */
+const reactiveProxy = <T extends object>(data: T, shallow = false): T => {
     return new Proxy(data, {
         // receiver 总是指向原始的读操作所在的那个对象
         get(target, key, receiver) {
@@ -67,7 +67,13 @@ const reactivityProxy = <T extends object>(data: T): T => {
             if (key === __RAW__) return target
             // 追踪依赖变化
             track(target, key)
-            return Reflect.get(target, key, receiver)
+            const getRes = Reflect.get(target, key, receiver)
+            // debugger
+            if (!shallow && typeof getRes === 'object' && getRes !== null) {
+                return reactiveProxy(getRes)
+            }
+
+            return getRes
         },
         has(targrt, key) {
             return Reflect.has(targrt, key)
@@ -175,4 +181,4 @@ const cleanup = (effectFn: ReactiveEffect) => {
     effectFn.deps.length = 0
 }
 
-export { effect, reactivityProxy, trigger, track }
+export { effect, reactiveProxy, trigger, track }

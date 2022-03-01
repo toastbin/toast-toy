@@ -1,4 +1,4 @@
-import { effect, reactivityProxy } from "./reactivity"
+import { effect, reactiveProxy } from "./reactivity"
 import { computed } from "./reactivity/computed"
 import { watch } from "./reactivity/watch"
 import { renderer } from "./renderer"
@@ -21,7 +21,7 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
     }
 }
 
-// const obj = reactivityProxy<{
+// const obj = reactiveProxy<{
 //     name: string,
 //     ok: boolean,
 //     foo: string,
@@ -134,30 +134,43 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // obj.name = 'toast'
 
 // 处理原型上的值
-const child = reactivityProxy<{
-    foo: number
-}>({
-    foo: 999
-})
+// const child = reactiveProxy<{
+//     foo: number
+// }>({
+//     foo: 999
+// })
 
-const parent = reactivityProxy<{
-    bar: number
-}>({
-    bar: 1
-})
+// const parent = reactiveProxy<{
+//     bar: number
+// }>({
+//     bar: 1
+// })
 
-Object.setPrototypeOf(child, parent)
+// Object.setPrototypeOf(child, parent)
+
+// effect(() => {
+//     // @ts-ignore
+//     // child 没有 bar 属性，所以会去读取原型上 parent 的属性
+//     // child 与 parent 都是响应式数据，所以执行了两次
+//     console.log(child.bar)
+// })
+
+// // @ts-ignore
+// // 触发两次副作用函数
+// child.bar = 2
+
+// 深 reactive
+const obj = reactiveProxy({
+    a: {
+        b: 1
+    }
+})
 
 effect(() => {
-    // @ts-ignore
-    // child 没有 bar 属性，所以会去读取原型上 parent 的属性
-    // child 与 parent 都是响应式数据，所以执行了两次
-    console.log(child.bar)
+    console.log(obj.a.b, 'bbbb')
 })
 
-// @ts-ignore
-// 触发两次副作用函数
-child.bar = 2
+obj.a.b = 2
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
