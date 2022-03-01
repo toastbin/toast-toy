@@ -112,19 +112,26 @@ const obj = reactivityProxy<{
 // }, 500)
 
 // 追踪 for ... in ...
+// effect(() => {
+//     for(const k in obj) {
+//         console.log(k, 'key')
+//     }
+// })
+
+// obj.a = 1
+// obj.a = 2
+
+// setTimeout(() => {
+//     console.log('*****')
+//     delete obj.foo
+// }, 300)
+
+// 值不发生变化不触发响应
 effect(() => {
-    for(const k in obj) {
-        console.log(k, 'key')
-    }
+    console.log(obj.name, 'effect')
 })
 
-obj.a = 1
-obj.a = 2
-
-setTimeout(() => {
-    console.log('*****')
-    delete obj.foo
-}, 300)
+obj.name = 'toast'
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {

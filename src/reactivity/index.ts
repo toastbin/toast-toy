@@ -69,12 +69,19 @@ const reactivityProxy = <T extends object>(data: T): T => {
             return Reflect.has(targrt, key)
         },
         set(target, key, newVal, receiver) {
+            const oldVal = target[key]
+
             const type = Object.prototype.hasOwnProperty.call(target, key)
                 ? triggerType.UPDATE
                 : triggerType.ADD
-            Reflect.set(target, key, newVal, receiver)
-            trigger(target, key, type)
-            return true
+            const setRes = Reflect.set(target, key, newVal, receiver)
+
+            // 更新的值不一样时才触发副作用函数，保证不是 NaN
+            if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
+                trigger(target, key, type)
+            }
+
+            return setRes
         },
         // 拦截 for in 操作
         ownKeys(target) {
