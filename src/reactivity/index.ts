@@ -104,7 +104,6 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
                 track(target, key)
             }
             const getRes = Reflect.get(target, key, receiver)
-            // debugger
             if (!shallow && typeof getRes === 'object' && getRes !== null) {
                 return reactiveProxy(getRes, options)
             }
