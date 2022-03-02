@@ -29,7 +29,12 @@ type Dep = Set<ReactiveEffect>
 interface ReactiveEffectOptions {
     scheduler?: (job: ReactiveEffect) => void
     lazy?: boolean
-  }
+}
+
+interface ReactiveOptionsOptions {
+    shallow?: boolean
+    readonly?: boolean;
+}
 
 const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): ReactiveEffect<T> => {
     const effectFn = (() => {
@@ -59,18 +64,23 @@ const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): Reac
 }
 
 /** 浅 reactive */
-const reactiveProxy = <T extends object>(data: T, shallow = false): T => {
+const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOptions = {}): T => {
+    const { shallow = false, readonly = false } = options
+
     return new Proxy(data, {
         // receiver 总是指向原始的读操作所在的那个对象
         get(target, key, receiver) {
             // 通过 raw 属性访问原始数据
             if (key === __RAW__) return target
-            // 追踪依赖变化
-            track(target, key)
+            // 只读属性不需要建立副作用函数
+            if (!readonly) {
+                // 追踪依赖变化
+                track(target, key)
+            }
             const getRes = Reflect.get(target, key, receiver)
             // debugger
             if (!shallow && typeof getRes === 'object' && getRes !== null) {
-                return reactiveProxy(getRes)
+                return reactiveProxy(getRes, options)
             }
 
             return getRes
@@ -79,6 +89,12 @@ const reactiveProxy = <T extends object>(data: T, shallow = false): T => {
             return Reflect.has(targrt, key)
         },
         set(target, key, newVal, receiver) {
+            // 只读属性拦截 set
+            if (readonly) {
+                console.warn(`property ${String(key)} is readonly`)
+                return true
+            }
+
             const oldVal = target[key]
 
             const type = Object.prototype.hasOwnProperty.call(target, key)
@@ -103,6 +119,12 @@ const reactiveProxy = <T extends object>(data: T, shallow = false): T => {
         },
         // 拦截 delete
         deleteProperty(target, key) {
+            // 只读属性拦截 delete
+            if (readonly) {
+                console.warn(`property ${String(key)} is readonly`)
+                return true
+            }
+
             const hasKey = Object.prototype.hasOwnProperty.call(target, key)
             const deleteRes = Reflect.deleteProperty(target, key)
             if (hasKey && deleteRes) {

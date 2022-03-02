@@ -160,17 +160,26 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // child.bar = 2
 
 // 深 reactive
+// const obj = reactiveProxy({
+//     a: {
+//         b: 1
+//     }
+// })
+
+// effect(() => {
+//     console.log(obj.a.b, 'bbbb')
+// })
+
+// obj.a.b = 2
+
+// readonly
 const obj = reactiveProxy({
-    a: {
-        b: 1
+    foo: {
+        bar: 1
     }
-})
+}, { readonly: true })
 
-effect(() => {
-    console.log(obj.a.b, 'bbbb')
-})
-
-obj.a.b = 2
+obj.foo.bar = 2
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
