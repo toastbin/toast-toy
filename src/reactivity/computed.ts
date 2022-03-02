@@ -1,4 +1,4 @@
-import { effect, track, trigger } from './'
+import { effect, track, trigger, triggerType } from './'
 
 interface ComputedOptions {
     get: () => any
@@ -18,7 +18,7 @@ const computed = (getter: ComputedGetter) => {
         scheduler() {
             dirty = true
             // 当计算属性依赖的响应式数据发生变化，手动调用 trigger 触发响应
-            trigger(obj, 'value')
+            trigger(obj, 'value', triggerType.SET)
         }
     })
 

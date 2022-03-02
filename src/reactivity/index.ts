@@ -7,14 +7,17 @@ let activeEffect: ReactiveEffect | null = null
 const effectStack: ReactiveEffect[] = []
 const ITERATE_KEY = Symbol()
 
-const triggerType = {
-    UPDATE: 'UPDATE',
+export const triggerType = {
+    SET: 'SET',
     ADD: 'ADD',
     DELETE: 'DELETE'
 } as const
 
 /** 响应式数据通过该属性访问原始数据 */
 const __RAW__ = '__RAW__'
+
+/** 存储原始对象到代理对象的映射 */
+const reactiveMap = new Map()
 
 /** 副作用函数 */
 export interface ReactiveEffect<T = any> {
@@ -35,6 +38,21 @@ interface ReactiveOptionsOptions {
     shallow?: boolean
     readonly?: boolean;
 }
+
+
+const arrayInstrumentations = {}
+
+;['includes', 'indexOf', 'lastIndexOf'].forEach(arrMethod => {
+    const originArrMethod = Array.prototype[arrMethod]
+    arrayInstrumentations[arrMethod] = function(...args: any[]) {
+        let res = originArrMethod.apply(this, args)
+        if (res === false) {
+            // false 说明没找到，通过 __raw__ 拿原始值再去找一遍
+            res = originArrMethod.apply(this.__RAW__, args)
+        }
+        return res
+    }
+})
 
 const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): ReactiveEffect<T> => {
     const effectFn = (() => {
@@ -66,14 +84,22 @@ const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): Reac
 /** 浅 reactive */
 const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOptions = {}): T => {
     const { shallow = false, readonly = false } = options
-
-    return new Proxy(data, {
+    const existProxy = reactiveMap.get(data)
+    if (existProxy) return existProxy
+    const proxy = new Proxy(data, {
         // receiver 总是指向原始的读操作所在的那个对象
         get(target, key, receiver) {
             // 通过 raw 属性访问原始数据
             if (key === __RAW__) return target
+
+            // 如果 target 是数组 且 当前操作的是需要改写的方法
+            if (Array.isArray(target) && Object.prototype.hasOwnProperty.call(arrayInstrumentations, key)) {
+                return Reflect.get(arrayInstrumentations, key, receiver)
+            }
+
             // 只读属性不需要建立副作用函数
-            if (!readonly) {
+            // TODO:避免追踪 Symbol.iterator，但是并没有去追踪该属性
+            if (!readonly && typeof key !== 'symbol') {
                 // 追踪依赖变化
                 track(target, key)
             }
@@ -96,17 +122,21 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
             }
 
             const oldVal = target[key]
+            const type = Array.isArray(target)
+                // target 是数组
+                // 如果设置的索引值大于原数组长度，新增操作
+                ? Number(key) < target.length ? triggerType.SET : triggerType.ADD
+                : Object.prototype.hasOwnProperty.call(target, key)
+                    ? triggerType.SET
+                    : triggerType.ADD
 
-            const type = Object.prototype.hasOwnProperty.call(target, key)
-                ? triggerType.UPDATE
-                : triggerType.ADD
             const setRes = Reflect.set(target, key, newVal, receiver)
 
             // target 等于 __RAW__ 下面的原属数据，说明当前 receiver 就是 target 的代理对象
             if (target === receiver[__RAW__]) {
                 // 更新的值不一样时才触发副作用函数，保证不是 NaN
                 if (oldVal !== newVal && (oldVal === oldVal || newVal === newVal)) {
-                    trigger(target, key, type)
+                    trigger(target, key, type, newVal)
                 }
             }
 
@@ -114,7 +144,7 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
         },
         // 拦截 for in 操作
         ownKeys(target) {
-            track(target, ITERATE_KEY)
+            track(target, Array.isArray ? 'length' : ITERATE_KEY)
             return Reflect.ownKeys(target)
         },
         // 拦截 delete
@@ -133,6 +163,10 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
             return deleteRes
         }
     })
+    
+    reactiveMap.set(data, proxy)
+
+    return proxy
 }
 
 /** get 函数内调用，跟踪依赖变化 */
@@ -159,7 +193,12 @@ const track = (target: object, key: string | number | symbol) => {
 }
 
 /** set 函数内调用，触发副作用函数变化 */
-const trigger = (target: object, key: string | number | symbol, type: keyof typeof triggerType) => {
+const trigger = (
+    target: object,
+    key: string | number | symbol,
+    type: keyof typeof triggerType,
+    newVal?: any
+) => {
     const depsMap = bucket.get(target)
 
     if (!depsMap) return
@@ -173,6 +212,28 @@ const trigger = (target: object, key: string | number | symbol, type: keyof type
             effectsToRun.add(fn)
         }
     })
+
+    // 操作数组 length
+    if (type === 'ADD' && Array.isArray(target)) {
+        const lengthEffects = depsMap.get('length')
+        lengthEffects && lengthEffects.forEach(fn => {
+            if (fn !== activeEffect) {
+                effectsToRun.add(fn)
+            }
+        })
+    }
+
+    if (Array.isArray(target) && key === 'length') {
+        depsMap.forEach((effects, key) => {
+            if (Number(key) >= newVal) {
+                effects.forEach(effectFn => {
+                    if (effectFn !== activeEffect) {
+                        effectsToRun.add(effectFn)
+                    }
+                })
+            }
+        })
+    }
 
     if (type === 'ADD' || type === 'DELETE') {
         const iterateEffects = depsMap.get(ITERATE_KEY)

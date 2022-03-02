@@ -173,13 +173,60 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // obj.a.b = 2
 
 // readonly
-const obj = reactiveProxy({
-    foo: {
-        bar: 1
-    }
-}, { readonly: true })
+// const obj = reactiveProxy({
+//     foo: {
+//         bar: 1
+//     }
+// }, { readonly: true })
 
-obj.foo.bar = 2
+// obj.foo.bar = 2
+
+// 处理数组
+// const arr = reactiveProxy(['foo', 'bar'])
+// 操作数组 length
+// effect(() => {
+//     console.log(arr[1], 'arr length 1')
+// })
+
+// effect(() => {
+//     console.log(arr[0], 'arr length 0')
+// })
+
+// effect(() => {
+//     console.log(arr.length, 'length')
+// })
+
+// arr.length = 1
+
+// 遍历数组
+// for in
+// effect(() => {
+//     for (const item in arr) {
+//         console.log(item, 'item')
+//     }
+//     console.log('*********')
+// })
+
+// for of
+// effect(() => {
+//     for (const item of arr) {
+//         console.log(item, 'item')
+//     }
+//     console.log('------')
+// })
+// arr[2] = 'qwe'
+// arr.length = 1
+
+// 数组查找方法
+const obj = {}
+const arr = reactiveProxy([obj, 2, 3, 4])
+effect(() => {
+    // console.log(arr.includes(arr[0]))
+    // console.log(arr.includes(obj))
+    console.log(arr[0], 'arr')
+})
+arr.fill(2)
+// arr[0] = '1'
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
