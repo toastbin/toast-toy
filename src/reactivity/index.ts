@@ -39,10 +39,10 @@ interface ReactiveOptionsOptions {
     readonly?: boolean;
 }
 
-
 const arrayInstrumentations = {}
 
-;['includes', 'indexOf', 'lastIndexOf'].forEach(arrMethod => {
+// 改写查找方法，用原始值做二次查找
+;(['includes', 'indexOf', 'lastIndexOf'] as const).forEach(arrMethod => {
     const originArrMethod = Array.prototype[arrMethod]
     arrayInstrumentations[arrMethod] = function(...args: any[]) {
         let res = originArrMethod.apply(this, args)
@@ -50,6 +50,33 @@ const arrayInstrumentations = {}
             // false 说明没找到，通过 __raw__ 拿原始值再去找一遍
             res = originArrMethod.apply(this.__RAW__, args)
         }
+        return res
+    }
+})
+
+/** 代表是否追踪 */
+let shouldTrack = true
+const shouldTrackStack: boolean[] = [] 
+const pauseTrack = () => {
+    // TODO: 没想明白为啥
+    // shouldTrackStack.push(shouldTrack)
+    shouldTrack = false
+}
+
+const resetTrack = () => {
+    // const last = shouldTrackStack.pop()
+    // shouldTrack = last === undefined ? true : last
+    shouldTrack = true
+}
+
+// 改写间接访问 length 又修改 length 的方法，防止无限循环
+;(['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(arrMethod => {
+    const method = Array.prototype[arrMethod] as any
+    arrayInstrumentations[arrMethod] = function(this: unknown[], ...args: unknown[]) {
+        // 在调用原方法之前，禁止追踪
+        pauseTrack()
+        const res = method.apply(this, args)
+        resetTrack()
         return res
     }
 })
@@ -171,7 +198,7 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
 /** get 函数内调用，跟踪依赖变化 */
 const track = (target: object, key: string | number | symbol) => {
     // 没有副作用函数 renturn
-    if (!activeEffect) return
+    if (!activeEffect || !shouldTrack) return
     // 获取当前对象的副作用函数map
     let depsMap = bucket.get(target)
 

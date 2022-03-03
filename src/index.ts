@@ -218,14 +218,14 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // arr.length = 1
 
 // 数组查找方法
-const obj = {}
-const arr = reactiveProxy([obj, 2, 3, 4])
-effect(() => {
-    // console.log(arr.includes(arr[0]))
-    // console.log(arr.includes(obj))
-    console.log(arr[0], 'arr')
-})
-arr.fill(2)
+// const obj = {}
+// const arr = reactiveProxy([obj, 2, 3, 4])
+// effect(() => {
+//     // console.log(arr.includes(arr[0]))
+//     // console.log(arr.includes(obj))
+//     console.log(arr[0], 'arr')
+// })
+// arr.fill(2)
 // arr[0] = '1'
 
 // object component vnode
