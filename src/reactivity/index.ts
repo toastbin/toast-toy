@@ -81,6 +81,30 @@ const resetTrack = () => {
     }
 })
 
+/** 改写的 set 内部方法 */
+const setMutationMethods = {
+    add(key) {
+        const target = this[__RAW__]
+        const existKey = target.has(key)
+
+        const res = target.add(key)
+        if (!existKey) {
+            trigger(target, key, triggerType.ADD)
+        }
+        return res
+    },
+    delete(key) {
+        const target = this[__RAW__]
+        const existKey = target.has(key)
+
+        const res = target.delete(key)
+        if (!existKey) {
+            trigger(target, key, triggerType.ADD)
+        }
+        return res
+    }
+}
+
 const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): ReactiveEffect<T> => {
     const effectFn = (() => {
         // 每次执行副作用函数的时候，通过这个反向映射，把自己从已经存在的集合中删除
@@ -118,6 +142,22 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
         get(target, key, receiver) {
             // 通过 raw 属性访问原始数据
             if (key === __RAW__) return target
+
+            if (Set.prototype.isPrototypeOf(target)) {
+                // 如果访问 set.size
+                if (key === 'size') {
+                    track(target, ITERATE_KEY)
+                    return Reflect.get(target, key, target)
+                }
+                // 访问 delete 方法
+                if (key === 'delete') {
+                    return Reflect.get(target, key, target).bind(target)
+                }
+
+                if (setMutationMethods[key]) {
+                    return setMutationMethods[key]
+                }
+            }
 
             // 如果 target 是数组 且 当前操作的是需要改写的方法
             if (Array.isArray(target) && Object.prototype.hasOwnProperty.call(arrayInstrumentations, key)) {

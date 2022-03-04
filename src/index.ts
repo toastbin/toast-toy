@@ -228,6 +228,16 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // arr.fill(2)
 // arr[0] = '1'
 
+// set map
+const s = reactiveProxy(new Set([1, 2]))
+// 读取 size
+effect(() => {
+    console.log(s.size)
+    console.log('----')
+})
+
+s.add(3)
+s.add(4)
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc
