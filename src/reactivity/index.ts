@@ -98,10 +98,38 @@ const setMutationMethods = {
         const existKey = target.has(key)
 
         const res = target.delete(key)
-        if (!existKey) {
+        if (existKey) {
             trigger(target, key, triggerType.ADD)
         }
         return res
+    }
+}
+
+/** 改写的 map 内部方法  */
+const mapMutationMethods = {
+    get(key) {
+        // TODO: any
+        const target = (this[__RAW__] as Map<unknown, unknown>)
+        const existKey = target.has(key)
+        // 建立响应联系
+        track(target, key)
+        if (existKey) {
+            const res = target.get(key)
+            return typeof res === 'object' ? reactiveProxy(res) : res
+        }
+    },
+    set(key, value) {
+        const target = (this[__RAW__] as Map<unknown, unknown>)
+        const existKey = target.has(key)
+        const oldValue = target.get(key)
+        target.set(key, value)
+        // 存在
+        if (existKey) {
+            trigger(target, key, triggerType.SET)
+        // 不存在
+        } else {
+            trigger(target, key, triggerType.ADD)
+        }
     }
 }
 
@@ -149,13 +177,15 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
                     track(target, ITERATE_KEY)
                     return Reflect.get(target, key, target)
                 }
-                // 访问 delete 方法
-                if (key === 'delete') {
-                    return Reflect.get(target, key, target).bind(target)
-                }
 
                 if (setMutationMethods[key]) {
                     return setMutationMethods[key]
+                }
+            }
+
+            if (Object.prototype.toString.call(target) === '[object Map]') {
+                if (mapMutationMethods[key]) {
+                    return mapMutationMethods[key]
                 }
             }
 
