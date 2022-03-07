@@ -102,6 +102,18 @@ const setMutationMethods = {
             trigger(target, key, triggerType.ADD)
         }
         return res
+    },
+    forEach(cb: (value?: unknown, key?: unknown, map?: Map<unknown, unknown>) => void, thisArg: unknown) {
+        const wrapReactive = (val: unknown) => typeof val === 'object' ? reactiveProxy(val) : val
+
+        const target = (this[__RAW__] as Map<unknown, unknown>)
+        track(target, ITERATE_KEY)
+        // important: make sure the callback is
+        // 1. invoked with the reactive map as `this` and 3rd arg
+        // 2. the value received should be a corresponding reactive/readonly.
+        target.forEach((v, k) => {
+            cb.call(thisArg, wrapReactive(v), wrapReactive(k), this)
+        })
     }
 }
 

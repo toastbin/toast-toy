@@ -290,14 +290,14 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // m.get(key).delete(1)
 
 // forEach 只关心 key
-const m = reactiveProxy(new Map([['foo', 1]]))
-effect(() => {
-    m.forEach((v, k) => {
-        console.log(k, 'kkkk')
-    })
-})
+// const m = reactiveProxy(new Map([['foo', 1]]))
+// effect(() => {
+//     m.forEach((v, k) => {
+//         console.log(k, 'kkkk')
+//     })
+// })
 
-m.set('foo', 2)
+// m.set('foo', 2)
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
