@@ -5,7 +5,7 @@ const bucket: WeakMap<object, Map<string | number | symbol, Dep>> = new WeakMap(
 // 存储被注册的副作用函数
 let activeEffect: ReactiveEffect | null = null
 const effectStack: ReactiveEffect[] = []
-const ITERATE_KEY = Symbol()
+const ITERATE_KEY = Symbol('ITERATE_KEY')
 
 export const triggerType = {
     SET: 'SET',
@@ -132,6 +132,18 @@ const mapMutationMethods = {
         } else if (oldValue !== value || (oldValue === oldValue && value === value)) {
             trigger(target, key, triggerType.SET)
         }
+    },
+    forEach(cb: (value?: unknown, key?: unknown, map?: Map<unknown, unknown>) => void, thisArg: unknown) {
+        const wrapReactive = (val: unknown) => typeof val === 'object' ? reactiveProxy(val) : val
+
+        const target = (this[__RAW__] as Map<unknown, unknown>)
+        track(target, ITERATE_KEY)
+        // important: make sure the callback is
+        // 1. invoked with the reactive map as `this` and 3rd arg
+        // 2. the value received should be a corresponding reactive/readonly.
+        target.forEach((v, k) => {
+            cb.call(thisArg, wrapReactive(v), wrapReactive(k), this)
+        })
     }
 }
 
@@ -339,7 +351,11 @@ const trigger = (
         })
     }
 
-    if (type === 'ADD' || type === 'DELETE') {
+    if (
+        type === 'ADD' ||
+        type === 'DELETE' ||
+        (type === 'SET' && Object.prototype.toString.call(target) === '[object Map]')
+    ) {
         const iterateEffects = depsMap.get(ITERATE_KEY)
         // 添加 ITERATE_KEY 相关联的副作用函数
         iterateEffects && iterateEffects.forEach(fn => {

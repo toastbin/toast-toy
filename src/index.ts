@@ -253,17 +253,51 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // m.set('bar', 33)
 
 // 污染原型
-const m = new Map()
-const p1 = reactiveProxy(m)
-const p2 = reactiveProxy(new Map())
+// const m = new Map()
+// const p1 = reactiveProxy(m)
+// const p2 = reactiveProxy(new Map())
 
-p1.set('p2', p2)
+// p1.set('p2', p2)
 
-effect(() => {
-    console.log(m.get('p2').size)
-})
+// effect(() => {
+//     console.log(m.get('p2').size)
+// })
 // 通过非代理数据设置值，副作用函数执行了，说明污染了原型
-m.get('p2').set('foo', 1)
+// m.get('p2').set('foo', 1)
+
+// 处理 forEach
+// const m = reactiveProxy(new Map([['foo', 1]]))
+
+// effect(() => {
+//     m.forEach((v, k, m) => {
+//         console.log(v, k, m)
+//     })
+// })
+
+// m.set('bar', 2)
+
+// forEach 回调参数是 非响应数据
+// const key = { key: 1 }
+// const value = new Set([1, 2, 3])
+// const m = reactiveProxy(new Map([[key, value]]))
+
+// effect(() => {
+//     m.forEach((v, k, m) => {
+//         console.log(v.size, 'v size', k, m)
+//     })
+// })
+
+// m.get(key).delete(1)
+
+// forEach 只关心 key
+const m = reactiveProxy(new Map([['foo', 1]]))
+effect(() => {
+    m.forEach((v, k) => {
+        console.log(k, 'kkkk')
+    })
+})
+
+m.set('foo', 2)
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
