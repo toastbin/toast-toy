@@ -6,6 +6,7 @@ const bucket: WeakMap<object, Map<string | number | symbol, Dep>> = new WeakMap(
 let activeEffect: ReactiveEffect | null = null
 const effectStack: ReactiveEffect[] = []
 const ITERATE_KEY = Symbol('ITERATE_KEY')
+const MAP_ITERATE_KEY = Symbol('MAP_ITERATE_KEY')
 
 export const triggerType = {
     SET: 'SET',
@@ -41,22 +42,22 @@ interface ReactiveOptionsOptions {
 
 const arrayInstrumentations = {}
 
-// 改写查找方法，用原始值做二次查找
-;(['includes', 'indexOf', 'lastIndexOf'] as const).forEach(arrMethod => {
-    const originArrMethod = Array.prototype[arrMethod]
-    arrayInstrumentations[arrMethod] = function(...args: any[]) {
-        let res = originArrMethod.apply(this, args)
-        if (res === false) {
-            // false 说明没找到，通过 __raw__ 拿原始值再去找一遍
-            res = originArrMethod.apply(this.__RAW__, args)
+    // 改写查找方法，用原始值做二次查找
+    ; (['includes', 'indexOf', 'lastIndexOf'] as const).forEach(arrMethod => {
+        const originArrMethod = Array.prototype[arrMethod]
+        arrayInstrumentations[arrMethod] = function (...args: any[]) {
+            let res = originArrMethod.apply(this, args)
+            if (res === false) {
+                // false 说明没找到，通过 __raw__ 拿原始值再去找一遍
+                res = originArrMethod.apply(this.__RAW__, args)
+            }
+            return res
         }
-        return res
-    }
-})
+    })
 
 /** 代表是否追踪 */
 let shouldTrack = true
-const shouldTrackStack: boolean[] = [] 
+const shouldTrackStack: boolean[] = []
 const pauseTrack = () => {
     // TODO: 没想明白为啥
     // shouldTrackStack.push(shouldTrack)
@@ -69,17 +70,76 @@ const resetTrack = () => {
     shouldTrack = true
 }
 
-// 改写间接访问 length 又修改 length 的方法，防止无限循环
-;(['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(arrMethod => {
-    const method = Array.prototype[arrMethod] as any
-    arrayInstrumentations[arrMethod] = function(this: unknown[], ...args: unknown[]) {
-        // 在调用原方法之前，禁止追踪
-        pauseTrack()
-        const res = method.apply(this, args)
-        resetTrack()
-        return res
+/** 将一个数据包裹成响应式数据 */
+const wrapReactive = (val: unknown) => typeof val === 'object' ? reactiveProxy(val) : val
+
+    // 改写间接访问 length 又修改 length 的方法，防止无限循环
+    ; (['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(arrMethod => {
+        const method = Array.prototype[arrMethod] as any
+        arrayInstrumentations[arrMethod] = function (this: unknown[], ...args: unknown[]) {
+            // 在调用原方法之前，禁止追踪
+            pauseTrack()
+            const res = method.apply(this, args)
+            resetTrack()
+            return res
+        }
+    })
+
+/** 迭代器方法 */
+const iterationFunc = function () {
+    const target = this[__RAW__]
+    const itr: IterableIterator<unknown> = target[Symbol.iterator]()
+    track(target, ITERATE_KEY)
+    return {
+        next() {
+            const { value, done } = itr.next()
+            return {
+                value: value ? [wrapReactive(value[0]), wrapReactive(value[1])] : value,
+                done,
+            }
+        },
+        [Symbol.iterator]() {
+            return this
+        }
     }
-})
+}
+
+/** set、map values 方法 */
+const valuesFunc = function() {
+    const target = this[__RAW__]
+    const itr: IterableIterator<unknown> = target.values()
+    track(target, ITERATE_KEY)
+    return {
+        next() {
+            const { value, done } = itr.next()
+            return {
+                value: wrapReactive(value),
+                done,
+            }
+        },
+        [Symbol.iterator]() {
+            return this
+        }
+    }
+}
+
+const keysFunc = function() {
+    const target = this[__RAW__]
+    const itr: IterableIterator<unknown> = target.keys()
+    track(target, MAP_ITERATE_KEY)
+    return {
+        next() {
+            const { value, done } = itr.next()
+            return {
+                value: wrapReactive(value),
+                done,
+            }
+        },
+        [Symbol.iterator]() {
+            return this
+        }
+    }
+}
 
 /** 改写的 set 内部方法 */
 const setMutationMethods = {
@@ -104,8 +164,6 @@ const setMutationMethods = {
         return res
     },
     forEach(cb: (value?: unknown, key?: unknown, map?: Map<unknown, unknown>) => void, thisArg: unknown) {
-        const wrapReactive = (val: unknown) => typeof val === 'object' ? reactiveProxy(val) : val
-
         const target = (this[__RAW__] as Map<unknown, unknown>)
         track(target, ITERATE_KEY)
         // important: make sure the callback is
@@ -114,7 +172,11 @@ const setMutationMethods = {
         target.forEach((v, k) => {
             cb.call(thisArg, wrapReactive(v), wrapReactive(k), this)
         })
-    }
+    },
+    [Symbol.iterator]: iterationFunc,
+    entries: iterationFunc,
+    values: valuesFunc,
+    keys: keysFunc,
 }
 
 /** 改写的 map 内部方法  */
@@ -140,14 +202,12 @@ const mapMutationMethods = {
         // 不存在
         if (!existKey) {
             trigger(target, key, triggerType.ADD)
-        // 存在
+            // 存在
         } else if (oldValue !== value || (oldValue === oldValue && value === value)) {
             trigger(target, key, triggerType.SET)
         }
     },
     forEach(cb: (value?: unknown, key?: unknown, map?: Map<unknown, unknown>) => void, thisArg: unknown) {
-        const wrapReactive = (val: unknown) => typeof val === 'object' ? reactiveProxy(val) : val
-
         const target = (this[__RAW__] as Map<unknown, unknown>)
         track(target, ITERATE_KEY)
         // important: make sure the callback is
@@ -156,7 +216,10 @@ const mapMutationMethods = {
         target.forEach((v, k) => {
             cb.call(thisArg, wrapReactive(v), wrapReactive(k), this)
         })
-    }
+    },
+    [Symbol.iterator]: iterationFunc,
+    values: valuesFunc,
+    keys: keysFunc,
 }
 
 const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): ReactiveEffect<T> => {
@@ -291,7 +354,7 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
             return deleteRes
         }
     })
-    
+
     reactiveMap.set(data, proxy)
 
     return proxy
@@ -371,6 +434,21 @@ const trigger = (
         const iterateEffects = depsMap.get(ITERATE_KEY)
         // 添加 ITERATE_KEY 相关联的副作用函数
         iterateEffects && iterateEffects.forEach(fn => {
+            if (fn !== activeEffect) {
+                effectsToRun.add(fn)
+            }
+        })
+    }
+
+    // map iterate
+    if (
+        (type === 'ADD' ||
+        type === 'DELETE') &&
+        Object.prototype.toString.call(target) === '[object Map]'
+    ) {
+        const mapIterateEffects = depsMap.get(MAP_ITERATE_KEY)
+        // 添加 ITERATE_KEY 相关联的副作用函数
+        mapIterateEffects && mapIterateEffects.forEach(fn => {
             if (fn !== activeEffect) {
                 effectsToRun.add(fn)
             }

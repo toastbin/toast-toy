@@ -299,6 +299,34 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 
 // m.set('foo', 2)
 
+// 迭代器方法 entries、keys、values
+const m = reactiveProxy(new Map([['k1', 'v1'], ['k2', 'v2']]))
+// effect(() => {
+//     for (const [k, v] of m) {
+//         console.log(k, v)
+//     }
+// })
+
+// m.set('k3', 'v3')
+
+// entries
+// effect(() => {
+//     for (const [k, v] of m.entries()) {
+//         console.log(k, v)
+//     }
+// })
+
+// m.set('k3', 'v3')
+
+// values
+effect(() => {
+    for (const v of m.keys()) {
+        console.log(v)
+    }
+})
+
+m.set('k2', 'v3')
+
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
     render: componentVnodeFunc

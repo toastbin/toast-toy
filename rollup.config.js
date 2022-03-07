@@ -34,7 +34,9 @@ export default {
     },
   ],
   plugins: [
-    typescript(),
+    typescript({
+      downlevelIteration: true
+    }),
     commonjs(),
     resolve(),
     server({
