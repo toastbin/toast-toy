@@ -241,16 +241,29 @@ const componentVnodeFunc: ComponentVnode['tag'] = () => {
 // s.delete(1)
 
 // map
-const m = reactiveProxy(new Map([['foo', 1]]))
+// const m = reactiveProxy(new Map([['foo', 1]]))
+
+// effect(() => {
+//     console.log(m.get('foo'))
+//     console.log(m.get('bar'))
+//     console.log('***')
+// })
+
+// m.set('foo', 2)
+// m.set('bar', 33)
+
+// 污染原型
+const m = new Map()
+const p1 = reactiveProxy(m)
+const p2 = reactiveProxy(new Map())
+
+p1.set('p2', p2)
 
 effect(() => {
-    console.log(m.get('foo'))
-    console.log(m.get('bar'))
-    console.log('***')
+    console.log(m.get('p2').size)
 })
-
-m.set('foo', 2)
-m.set('bar', 33)
+// 通过非代理数据设置值，副作用函数执行了，说明污染了原型
+m.get('p2').set('foo', 1)
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {

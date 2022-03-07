@@ -122,13 +122,15 @@ const mapMutationMethods = {
         const target = (this[__RAW__] as Map<unknown, unknown>)
         const existKey = target.has(key)
         const oldValue = target.get(key)
-        target.set(key, value)
-        // 存在
-        if (existKey) {
-            trigger(target, key, triggerType.SET)
+        // 确保设置的是原始值 而不是代理后的，防止把响应式数据设置到原始数据上造成数据污染
+        const rawValue = value[__RAW__] || value
+        target.set(key, rawValue)
         // 不存在
-        } else {
+        if (!existKey) {
             trigger(target, key, triggerType.ADD)
+        // 存在
+        } else if (oldValue !== value || (oldValue === oldValue && value === value)) {
+            trigger(target, key, triggerType.SET)
         }
     }
 }
@@ -160,7 +162,7 @@ const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): Reac
     return effectFn
 }
 
-/** 浅 reactive */
+/** reactive */
 const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOptions = {}): T => {
     const { shallow = false, readonly = false } = options
     const existProxy = reactiveMap.get(data)
@@ -184,6 +186,12 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
             }
 
             if (Object.prototype.toString.call(target) === '[object Map]') {
+                // 如果访问 set.size
+                if (key === 'size') {
+                    track(target, ITERATE_KEY)
+                    return Reflect.get(target, key, target)
+                }
+
                 if (mapMutationMethods[key]) {
                     return mapMutationMethods[key]
                 }
