@@ -1,5 +1,6 @@
 import { effect, reactiveProxy } from "./reactivity"
 import { computed } from "./reactivity/computed"
+import { ref, toRef, toRefs } from "./reactivity/ref"
 import { watch } from "./reactivity/watch"
 import { renderer } from "./renderer"
 import { ComponentVnode, ElementVnode } from "./renderer/type"
@@ -319,13 +320,36 @@ const m = reactiveProxy(new Map([['k1', 'v1'], ['k2', 'v2']]))
 // m.set('k3', 'v3')
 
 // values
+// effect(() => {
+//     for (const v of m.keys()) {
+//         console.log(v)
+//     }
+// })
+
+// m.set('k2', 'v3')
+
+// 原始值的响应式方案
+// boolean string number null undefined symbol bigint
+// 做一层包裹 ref
+
+// const refValue = ref<number>(1)
+// effect(() => {
+//     console.log(refValue.value)
+// })
+
+// refValue.value = 2
+
+const obj = reactiveProxy({
+    a: 1, b: 2
+})
+// 响应丢失
+const foo = { ...toRefs(obj) }
+
 effect(() => {
-    for (const v of m.keys()) {
-        console.log(v)
-    }
+    console.log(foo.a.value)
 })
 
-m.set('k2', 'v3')
+foo.a.value = 123
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
