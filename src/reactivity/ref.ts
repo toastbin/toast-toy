@@ -5,6 +5,7 @@ const __IS__REF__ = '__IS__REF__'
 // TODO: 体操
 interface Ref<T = any> {
     value: T
+    __IS__REF__?: true
 }
 
 export const ref = <T = any>(value: T): Ref<T> => {
@@ -46,4 +47,30 @@ export const toRefs = <T extends object, K extends keyof T>(obj: T): Record<K, R
     }
 
     return res
+}
+
+/** 判断是否是 ref */
+const isRef = <T>(target: any): target is Ref<T> => {
+    return target[__IS__REF__]
+}
+
+/** 访问 ref 时直接访问 .value */
+export const proxyRefs = <T extends object, K extends keyof T>(target: Record<K, T[K]>) => {
+    return new Proxy(target, {
+        get(t, k, r) {
+            const value: Ref<T> | T = Reflect.get(t, k, r)
+            if (isRef(value)) {
+                return value.value
+            }
+            return value
+        },
+        set(t, k, v, r) {
+            const value = t[k]
+            if (isRef(value)) {
+                value.value = v
+                return true
+            }
+            return Reflect.set(t, k, v, r)
+        }
+    })
 }

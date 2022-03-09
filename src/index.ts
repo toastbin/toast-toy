@@ -1,6 +1,6 @@
 import { effect, reactiveProxy } from "./reactivity"
 import { computed } from "./reactivity/computed"
-import { ref, toRef, toRefs } from "./reactivity/ref"
+import { proxyRefs, ref, toRef, toRefs } from "./reactivity/ref"
 import { watch } from "./reactivity/watch"
 import { renderer } from "./renderer"
 import { ComponentVnode, ElementVnode } from "./renderer/type"
@@ -343,13 +343,13 @@ const obj = reactiveProxy({
     a: 1, b: 2
 })
 // 响应丢失
-const foo = { ...toRefs(obj) }
+const foo = proxyRefs({ ...toRefs(obj) })
 
 effect(() => {
-    console.log(foo.a.value)
+    console.log(foo.a)
 })
 
-foo.a.value = 123
+foo.a = 123
 
 // object component vnode
 const componentVnodeObject: ComponentVnode['tag'] = {
