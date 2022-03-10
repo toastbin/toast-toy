@@ -71,7 +71,7 @@ const resetTrack = () => {
 }
 
 /** 将一个数据包裹成响应式数据 */
-const wrapReactive = (val: unknown) => typeof val === 'object' ? reactiveProxy(val) : val
+const wrapReactive = (val: unknown) => typeof val === 'object' ? reactive(val) : val
 
     // 改写间接访问 length 又修改 length 的方法，防止无限循环
     ; (['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(arrMethod => {
@@ -189,7 +189,7 @@ const mapMutationMethods = {
         track(target, key)
         if (existKey) {
             const res = target.get(key)
-            return typeof res === 'object' ? reactiveProxy(res) : res
+            return typeof res === 'object' ? reactive(res) : res
         }
     },
     set(key, value) {
@@ -250,7 +250,7 @@ const effect = <T = any>(fn: () => T, options: ReactiveEffectOptions = {}): Reac
 }
 
 /** reactive */
-const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOptions = {}): T => {
+const reactive = <T extends object>(data: T, options: ReactiveOptionsOptions = {}): T => {
     const { shallow = false, readonly = false } = options
     const existProxy = reactiveMap.get(data)
     if (existProxy) return existProxy
@@ -297,7 +297,7 @@ const reactiveProxy = <T extends object>(data: T, options: ReactiveOptionsOption
             }
             const getRes = Reflect.get(target, key, receiver)
             if (!shallow && typeof getRes === 'object' && getRes !== null) {
-                return reactiveProxy(getRes, options)
+                return reactive(getRes, options)
             }
 
             return getRes
@@ -474,4 +474,4 @@ const cleanup = (effectFn: ReactiveEffect) => {
     effectFn.deps.length = 0
 }
 
-export { effect, reactiveProxy, trigger, track }
+export { effect, reactive, trigger, track }

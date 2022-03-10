@@ -1,11 +1,10 @@
-import { reactiveProxy } from './'
+import { reactive } from './'
 
 /** 证明当前属性是 ref 的标识 */
 const __IS__REF__ = '__IS__REF__'
 // TODO: 体操
 interface Ref<T = any> {
     value: T
-    __IS__REF__?: true
 }
 
 export const ref = <T = any>(value: T): Ref<T> => {
@@ -18,7 +17,7 @@ export const ref = <T = any>(value: T): Ref<T> => {
         value: true,
     })
 
-    return reactiveProxy(wrapper)
+    return reactive(wrapper)
 }
 
 export const toRef = <T extends object, K extends keyof T>(obj: T, key: K): Ref<T[K]> => {
