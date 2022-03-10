@@ -1,39 +1,21 @@
-import { effect, reactive } from "./reactivity"
-import { computed } from "./reactivity/computed"
-import { proxyRefs, ref, toRef, toRefs } from "./reactivity/ref"
-import { renderer } from "./renderer"
-import { ComponentVnode, ElementVnode } from "./renderer/type"
+import { effect } from './reactivity'
+import { ref } from './reactivity/ref'
+import { createRenderer } from './renderer'
+import { domRenderOptions } from './renderer/domRenderOptions'
+import { ElementVnode } from './renderer/type'
 
 const foo = ref<string>('foo')
-// render func
-const componentVnodeFunc: ComponentVnode['tag'] = () => {
-    return {
+const renderer = createRenderer(domRenderOptions)
+
+effect(() => {
+    const vnode: ElementVnode = {
         tag: 'div',
         props: {
             onClick: () => console.log('clicked')
         },
-        children: [
-            {
-                tag: 'span',
-                props: {},
-                children: foo.value
-            }
-        ]
+        children: foo.value
     }
-}
-
-// object component vnode
-const componentVnodeObject: ComponentVnode['tag'] = {
-    render: componentVnodeFunc
-} 
-
-const vnode: ComponentVnode = {
-    tag: componentVnodeObject
-}
-
-effect(() => {
-    document.querySelector('#app').innerHTML = null
-    renderer(vnode, '#app')
+    renderer.render(vnode, document.querySelector('#app'))
 })
 
 setTimeout(() => {

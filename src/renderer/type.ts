@@ -13,5 +13,16 @@ export interface ComponentVnode {
     };
 }
 
+export type Container = HTMLElement & {
+    _vnode: ElementVnode
+}
+
 /** 事件 */
 export type ElementEvent = keyof GlobalEventHandlersEventMap
+
+/** 渲染器选项 */
+export interface RendererOptions {
+    createElement: (tag: string) => HTMLElement
+    setElementText: (el: HTMLElement, text: string) => void
+    insert: (el: HTMLElement, container: HTMLElement) => void
+}
