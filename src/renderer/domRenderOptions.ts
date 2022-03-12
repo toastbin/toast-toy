@@ -1,4 +1,4 @@
-import { RendererOptions } from "./type";
+import { ElementEvent, RendererOptions } from "./type";
 
 export const domRenderOptions: RendererOptions = {
     createElement(tag) {
@@ -9,5 +9,8 @@ export const domRenderOptions: RendererOptions = {
     },
     insert(el, container) {
         container.appendChild(el)
+    },
+    setEvent(el, eventName: ElementEvent, listener, options) {
+        el.addEventListener(eventName, listener, options)
     }
 }

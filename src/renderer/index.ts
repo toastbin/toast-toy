@@ -5,7 +5,8 @@ export const createRenderer = (options: RendererOptions) => {
     const {
         createElement,
         setElementText,
-        insert
+        insert,
+        setEvent
     } = options
 
     /** 挂载普通元素节点 */
@@ -15,7 +16,7 @@ export const createRenderer = (options: RendererOptions) => {
             if (key.startsWith('on')) {
                 // on开头，事件
                 // TODO: 先这样
-                el.addEventListener(key.replace('on', '').toLowerCase() as ElementEvent, elementVnode.props[key])
+                setEvent(el, key.replace('on', '').toLowerCase() as ElementEvent, elementVnode.props[key])
             }
         }
     
