@@ -1,5 +1,10 @@
 import { ElementEvent, RendererOptions } from "./type";
 
+const shouldSetAsProps = (el: HTMLElement, key: string) => {
+    if (key === 'form' && el.tagName === 'INPUT') return false;
+    return key in el;
+}
+
 export const domRenderOptions: RendererOptions = {
     createElement(tag) {
         return document.createElement(tag)
@@ -12,5 +17,17 @@ export const domRenderOptions: RendererOptions = {
     },
     setEvent(el, eventName: ElementEvent, listener, options) {
         el.addEventListener(eventName, listener, options)
+    },
+    patchProps(el, attributeName, value) {
+        // 属性名存在于 DOM properties 中
+        if (shouldSetAsProps(el, attributeName)) {
+            if (typeof el[attributeName] === 'boolean' && value === '') {
+                el[attributeName] = true
+            } else {
+                el[attributeName] = value
+            }
+        } else {
+            el.setAttribute(attributeName, String(value))
+        }
     }
 }

@@ -1,6 +1,7 @@
 export interface ElementVnode {
     tag: string;
-    props: Record<string, any>;
+    // TODO on打头的推倒为方法
+    props?: Record<string, string | boolean | (() => any)>
     /** 文本节点 or vnode */
     children: string | ElementVnode[] | ComponentVnode[]
 }
@@ -26,4 +27,5 @@ export interface RendererOptions {
     setElementText: (el: HTMLElement, text: string) => void
     insert: (el: HTMLElement, container: HTMLElement) => void
     setEvent: (el: HTMLElement, eventName: ElementEvent, listener: (this: HTMLElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, options?:  boolean | AddEventListenerOptions) => any
+    patchProps: (el: HTMLElement, attributeName: string, value: string | boolean) => void
 }
