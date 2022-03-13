@@ -1,6 +1,7 @@
 import { ElementEvent, RendererOptions } from "./type";
+import { normalizeClass } from "./utils";
 
-const shouldSetAsProps = (el: HTMLElement, key: string) => {
+const shouldSetAsProps = (el: Element, key: string) => {
     if (key === 'form' && el.tagName === 'INPUT') return false;
     return key in el;
 }
@@ -22,6 +23,10 @@ export const domRenderOptions: RendererOptions = {
         if (attributeName.startsWith('on')) {
             if (typeof value === 'function') {
                 domRenderOptions.setEvent(el, attributeName.replace('on', '').toLowerCase() as ElementEvent, value)
+            }
+        } else if (attributeName === 'class') {
+            if (typeof value === 'string' || typeof value == 'object') {
+                el.className = normalizeClass(value)
             }
         } else {
             // 属性名存在于 DOM properties 中

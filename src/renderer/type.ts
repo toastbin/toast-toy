@@ -1,7 +1,7 @@
 export interface ElementVnode {
     tag: string;
     // TODO on打头的推倒为方法
-    props?: Record<string, string | boolean | (() => any)>
+    props?: Record<string, string | (() => any) | boolean | Record<string, boolean> | (string | Record<string, boolean>)[]>
     /** 文本节点 or vnode */
     children: string | ElementVnode[] | ComponentVnode[]
 }
@@ -23,9 +23,9 @@ export type ElementEvent = keyof GlobalEventHandlersEventMap
 
 /** 渲染器选项 */
 export interface RendererOptions {
-    createElement: (tag: string) => HTMLElement
-    setElementText: (el: HTMLElement, text: string) => void
-    insert: (el: HTMLElement, container: HTMLElement) => void
-    setEvent: (el: HTMLElement, eventName: ElementEvent, listener: (this: HTMLElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, options?: boolean | AddEventListenerOptions) => any
-    patchProps: (el: HTMLElement, attributeName: string, value: string | boolean | (() => any)) => void
+    createElement: (tag: string) => Element
+    setElementText: (el: Element, text: string) => void
+    insert: (el: Element, container: Element) => void
+    setEvent: (el: Element, eventName: ElementEvent, listener: (this: Element, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, options?: boolean | AddEventListenerOptions) => any
+    patchProps: (el: Element, attributeName: string, value: string | boolean | (() => any) | Record<string, boolean> | (string | Record<string, boolean>)[]) => void
 }

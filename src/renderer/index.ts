@@ -48,7 +48,6 @@ export const createRenderer = (options: RendererOptions) => {
     }
 
     const render = (vnode: ElementVnode, container: Container) => {
-        console.log(111)
         if (vnode) {
             // 新旧 vnode 都存在， patch
             patch(container._vnode, vnode, container)

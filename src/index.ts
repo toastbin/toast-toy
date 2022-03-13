@@ -13,6 +13,10 @@ effect(() => {
         props: {
             onClick: () => console.log('clicked'),
             id: 'foo',
+            class: ['aaa', {
+                a: true,
+                b: false
+            }]
         },
         children: [
             {
