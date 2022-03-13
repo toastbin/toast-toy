@@ -19,15 +19,21 @@ export const domRenderOptions: RendererOptions = {
         el.addEventListener(eventName, listener, options)
     },
     patchProps(el, attributeName, value) {
-        // 属性名存在于 DOM properties 中
-        if (shouldSetAsProps(el, attributeName)) {
-            if (typeof el[attributeName] === 'boolean' && value === '') {
-                el[attributeName] = true
-            } else {
-                el[attributeName] = value
+        if (attributeName.startsWith('on')) {
+            if (typeof value === 'function') {
+                domRenderOptions.setEvent(el, attributeName.replace('on', '').toLowerCase() as ElementEvent, value)
             }
         } else {
-            el.setAttribute(attributeName, String(value))
+            // 属性名存在于 DOM properties 中
+            if (shouldSetAsProps(el, attributeName)) {
+                if (typeof el[attributeName] === 'boolean' && value === '') {
+                    el[attributeName] = true
+                } else {
+                    el[attributeName] = value
+                }
+            } else {
+                el.setAttribute(attributeName, String(value))
+            }
         }
     }
 }

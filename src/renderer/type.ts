@@ -26,6 +26,6 @@ export interface RendererOptions {
     createElement: (tag: string) => HTMLElement
     setElementText: (el: HTMLElement, text: string) => void
     insert: (el: HTMLElement, container: HTMLElement) => void
-    setEvent: (el: HTMLElement, eventName: ElementEvent, listener: (this: HTMLElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, options?:  boolean | AddEventListenerOptions) => any
-    patchProps: (el: HTMLElement, attributeName: string, value: string | boolean) => void
+    setEvent: (el: HTMLElement, eventName: ElementEvent, listener: (this: HTMLElement, ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, options?: boolean | AddEventListenerOptions) => any
+    patchProps: (el: HTMLElement, attributeName: string, value: string | boolean | (() => any)) => void
 }

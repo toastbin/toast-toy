@@ -6,7 +6,6 @@ export const createRenderer = (options: RendererOptions) => {
         createElement,
         setElementText,
         insert,
-        setEvent,
         patchProps
     } = options
 
@@ -26,13 +25,7 @@ export const createRenderer = (options: RendererOptions) => {
 
         if (elementVnode.props) {
             for (const key in elementVnode.props) {
-                if (key.startsWith('on')) {
-                    // on开头，事件
-                    // TODO: 先这样
-                    setEvent(el, key.replace('on', '').toLowerCase() as ElementEvent, elementVnode.props[key] as () => any)
-                } else {
-                    patchProps(el, key, elementVnode.props[key] as string | boolean)
-                }
+                patchProps(el, key, elementVnode.props[key])
             }
         }
     
