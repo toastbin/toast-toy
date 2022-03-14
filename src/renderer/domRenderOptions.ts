@@ -1,7 +1,7 @@
 import { ElementEvent, RendererOptions } from "./type";
 import { normalizeClass } from "./utils";
 
-const shouldSetAsProps = (el: Element, key: string) => {
+export const shouldSetAsProps = (el: Element, key: string) => {
     if (key === 'form' && el.tagName === 'INPUT') return false;
     return key in el;
 }
@@ -16,29 +16,48 @@ export const domRenderOptions: RendererOptions = {
     insert(el, container) {
         container.appendChild(el)
     },
-    setEvent(el, eventName: ElementEvent, listener, options) {
+    setEvent(el, eventName, listener, options) {
         el.addEventListener(eventName, listener, options)
     },
-    patchProps(el, attributeName, value) {
-        if (attributeName.startsWith('on')) {
-            if (typeof value === 'function') {
-                domRenderOptions.setEvent(el, attributeName.replace('on', '').toLowerCase() as ElementEvent, value)
+    patchProps (el, key, preValue, newValue) {
+        if (key.startsWith('on')) {
+            if (typeof newValue === 'function') {
+                const eventMap = el._event_invoker_map || (el._event_invoker_map = {})
+                let currentInvoker = eventMap[key] || (eventMap[key] = {})
+                const name = key.replace('on', '').toLowerCase() as ElementEvent
+                if (newValue) {
+                    if (!Object.keys(currentInvoker).length) {
+                        currentInvoker.wrapper = eventMap[key].wrapper = (e) => {
+                            currentInvoker.realInvoker(e)
+                        }
+                    }
+                    currentInvoker.realInvoker = newValue
+                    domRenderOptions.setEvent(el, name, currentInvoker.wrapper)
+                } else if (currentInvoker) {
+                    el.removeEventListener(name, currentInvoker.wrapper)
+                }
             }
-        } else if (attributeName === 'class') {
-            if (typeof value === 'string' || typeof value == 'object') {
-                el.className = normalizeClass(value)
+        } else if (key === 'class') {
+            if (typeof newValue === 'string' || typeof newValue == 'object') {
+                el.className = normalizeClass(newValue)
             }
         } else {
             // 属性名存在于 DOM properties 中
-            if (shouldSetAsProps(el, attributeName)) {
-                if (typeof el[attributeName] === 'boolean' && value === '') {
-                    el[attributeName] = true
+            if (shouldSetAsProps(el, key)) {
+                if (typeof el[key] === 'boolean' && newValue === '') {
+                    el[key] = true
                 } else {
-                    el[attributeName] = value
+                    el[key] = newValue
                 }
             } else {
-                el.setAttribute(attributeName, String(value))
+                el.setAttribute(key, String(newValue))
             }
+        }
+    },
+    unmount(vnode) {
+        const parent = vnode.el.parentNode
+        if (parent) {
+            parent.removeChild(vnode.el)
         }
     }
 }

@@ -9,9 +9,10 @@ const renderer = createRenderer(domRenderOptions)
 
 effect(() => {
     const vnode: ElementVnode = {
-        tag: 'div',
+        type: 'div',
         props: {
-            onClick: () => console.log('clicked'),
+            onClick: () => console.log('onClick'),
+            onMouseenter: () => console.log('onMouseenter'),
             id: 'foo',
             class: ['aaa', {
                 a: true,
@@ -20,11 +21,11 @@ effect(() => {
         },
         children: [
             {
-                tag: 'span',
+                type: 'span',
                 children: '1111'
             },
             {
-                tag: 'span',
+                type: 'span',
                 children: '2222'
             }
         ]

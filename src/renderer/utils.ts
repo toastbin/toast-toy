@@ -1,11 +1,11 @@
 import { ElementVnode, ComponentVnode } from "./type"
 
 export const isElementVnode = (vnode: ElementVnode | ComponentVnode): vnode is ElementVnode => {
-    return typeof vnode.tag === 'string'
+    return typeof vnode.type === 'string'
 }
 
 export const isComponentVnode = (vnode: ElementVnode | ComponentVnode): vnode is ComponentVnode => {
-    return typeof vnode.tag === 'function' || typeof vnode.tag === 'object'
+    return typeof vnode.type === 'function' || typeof vnode.type === 'object'
 }
 
 const transClassProps = (classProps: string | Record<string, boolean>): string => {
