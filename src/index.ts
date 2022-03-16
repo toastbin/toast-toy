@@ -6,28 +6,25 @@ import { ElementVnode } from './renderer/type'
 
 const foo = ref<string>('foo')
 const renderer = createRenderer(domRenderOptions)
+const bool = ref<boolean>(false)
 
 effect(() => {
     const vnode: ElementVnode = {
         type: 'div',
-        props: {
-            onClick: () => console.log('onClick'),
-            onMouseenter: () => console.log('onMouseenter'),
-            id: 'foo',
-            class: ['aaa', {
-                a: true,
-                b: false
-            }]
-        },
+        props: bool.value ? {
+            onClick: () => console.log('outer click'),
+        } : {},
         children: [
             {
                 type: 'span',
-                children: '1111'
+                children: '1111',
+                props: {
+                    onClick: () => {
+                        bool.value = true
+                        console.log('inner click')
+                    }
+                }
             },
-            {
-                type: 'span',
-                children: '2222'
-            }
         ]
     }
     renderer.render(vnode, document.querySelector('#app'))

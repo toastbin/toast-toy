@@ -19,7 +19,11 @@ export type Container = HTMLElement & {
     /** 缓存的  vnode */
     _vnode: ElementVnode
     /** 事件处理 map */
-    _event_invoker_map?: Record<string, { wrapper?: (ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, realInvoker?: Function }> | null
+    _event_invoker_map?: Record<string, {
+        wrapper?: (ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any,
+        realInvoker?: Function | Function[],
+        attched?: number
+    }> | null
 }
 
 type El = Omit<Container, '_vnode'>

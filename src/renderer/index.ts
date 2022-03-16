@@ -70,7 +70,7 @@ export const createRenderer = (options: RendererOptions) => {
 
         if (newProps) {
             for (const key in newProps) {
-                patchProps(newVnode.el, key, oldProps[key], newProps[key])
+                patchProps(oldVnode.el, key, oldProps[key], newProps[key])
             }
         }
     }

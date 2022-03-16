@@ -28,10 +28,17 @@ export const domRenderOptions: RendererOptions = {
                 if (newValue) {
                     if (!Object.keys(currentInvoker).length) {
                         currentInvoker.wrapper = eventMap[key].wrapper = (e) => {
-                            currentInvoker.realInvoker(e)
+                            // 事件发生的时间早于绑定的时间 不执行
+                            if (e.timeStamp < currentInvoker.attched) return
+                            if (Array.isArray(currentInvoker.realInvoker)) {
+                                currentInvoker.realInvoker.forEach((fn) => fn(e))
+                            }  else {
+                                currentInvoker.realInvoker(e)
+                            }
                         }
                     }
                     currentInvoker.realInvoker = newValue
+                    currentInvoker.attched = performance.now()
                     domRenderOptions.setEvent(el, name, currentInvoker.wrapper)
                 } else if (currentInvoker) {
                     el.removeEventListener(name, currentInvoker.wrapper)
