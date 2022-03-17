@@ -3,8 +3,8 @@ export interface ElementVnode {
     // TODO on打头的推倒为方法
     props?: Record<string, string | (() => any) | boolean | Record<string, boolean> | (string | Record<string, boolean>)[]>
     /** 文本节点 or vnode */
-    children: string | ElementVnode[] | ComponentVnode[]
-    el?: El
+    children: string | ElementVnode[] | ComponentVnode[] | null
+    el?: Container
 }
 
 type RenderFunc = () => ElementVnode

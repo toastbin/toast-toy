@@ -20,8 +20,8 @@ export const createRenderer = (options: RendererOptions) => {
             // children 是字符串，说明是文本子节点
             setElementText(el, elementVnode.children)
         } else if (Array.isArray(elementVnode.children)) {
+            // 多子节点
             elementVnode.children.forEach(child => {
-                // 挂载阶段
                 patch(null, child, el)
             })
         }
@@ -65,12 +65,56 @@ export const createRenderer = (options: RendererOptions) => {
     }
 
     const patchElement = (oldVnode: ElementVnode, newVnode: ElementVnode) => {
+        const el = newVnode.el = oldVnode.el
         const oldProps = oldVnode.props
         const newProps = newVnode.props
 
-        if (newProps) {
-            for (const key in newProps) {
-                patchProps(oldVnode.el, key, oldProps[key], newProps[key])
+        for (const key in newProps) {
+            if (newProps[key] !== oldProps[key]) {
+                patchProps(el, key, oldProps[key], newProps[key])
+            }
+        }
+
+        for (const key in oldProps) {
+            if (!(key in newProps)) {
+                patchProps(el, key, oldProps[key], null)
+            }
+        }
+
+        // 更新 children
+        patchChildren(oldVnode, newVnode, el);
+    }
+
+    const patchChildren = (oldVnode: ElementVnode, newVnode: ElementVnode, container: Container) => {
+        // 新子节点是文本节点
+        if (typeof newVnode.children === 'string') {
+            // 如果旧子节点是数组，逐一卸载
+            if (Array.isArray(oldVnode.children)) {
+                oldVnode.children.forEach((c) => unmount(c))
+            }
+            // 设置新文本节点
+            setElementText(container, newVnode.children)
+        // 新子节点是数组
+        } else if (Array.isArray(newVnode.children)) {
+            // 旧子节点也是数组
+            if (Array.isArray(oldVnode.children)) {
+                // 卸载旧节点
+                oldVnode.children.forEach((c) => unmount(c))
+            // 旧子节点不是数组
+            } else {
+                setElementText(container, '')
+            }
+            // 挂载新节点
+            newVnode.children.forEach((c) => patch(null, c, container))
+        // 新子节点不存在
+        } else {
+            // 旧子节点也是数组
+            if (Array.isArray(oldVnode.children)) {
+                // 卸载旧节点
+                oldVnode.children.forEach((c) => unmount(c))
+            // 旧子节点不是数组
+            } else {
+                setElementText(container, '')
             }
         }
     }
