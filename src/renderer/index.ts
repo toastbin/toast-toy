@@ -1,6 +1,9 @@
 import { shouldSetAsProps } from './domRenderOptions';
-import type { ElementVnode, ElementEvent, Container, RendererOptions, PropsType } from './type';
+import type { ElementVnode, ElementEvent, Container, RendererOptions, PropsType, El } from './type';
 import { normalizeClass } from './utils';
+
+export const TEXT = Symbol('text')
+export const COMMENT = Symbol('comment')
 
 /** 创建渲染器 */
 export const createRenderer = (options: RendererOptions) => {
@@ -9,7 +12,8 @@ export const createRenderer = (options: RendererOptions) => {
         setElementText,
         insert,
         patchProps,
-        unmount
+        unmount,
+        createTextNode
     } = options
 
     /** 挂载普通元素节点 */
@@ -56,6 +60,12 @@ export const createRenderer = (options: RendererOptions) => {
             } else {
                 patchElement(oldVnode, newVnode)
             }
+            // 文本节点
+        } else if (type === TEXT) {
+            if (!oldVnode) {
+                const el = newVnode.el = createTextNode(newVnode.children as string)
+                insert(el, container)
+            }
         } else if(typeof type === 'object') {
             // 组件 vnode
         } else {
@@ -71,18 +81,18 @@ export const createRenderer = (options: RendererOptions) => {
 
         for (const key in newProps) {
             if (newProps[key] !== oldProps[key]) {
-                patchProps(el, key, oldProps[key], newProps[key])
+                patchProps(el as El, key, oldProps[key], newProps[key])
             }
         }
 
         for (const key in oldProps) {
             if (!(key in newProps)) {
-                patchProps(el, key, oldProps[key], null)
+                patchProps(el as El, key, oldProps[key], null)
             }
         }
 
         // 更新 children
-        patchChildren(oldVnode, newVnode, el);
+        patchChildren(oldVnode, newVnode, el as Container);
     }
 
     const patchChildren = (oldVnode: ElementVnode, newVnode: ElementVnode, container: Container) => {

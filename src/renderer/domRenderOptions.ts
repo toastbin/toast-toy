@@ -8,7 +8,7 @@ export const shouldSetAsProps = (el: Element, key: string) => {
 
 export const domRenderOptions: RendererOptions = {
     createElement(tag) {
-        return document.createElement(tag)
+        return document.createElement(tag as string)
     },
     setElementText(el, text) {
         el.appendChild(document.createTextNode(text))
@@ -66,5 +66,8 @@ export const domRenderOptions: RendererOptions = {
         if (parent) {
             parent.removeChild(vnode.el)
         }
+    },
+    createTextNode(text) {
+        return document.createTextNode(text)
     }
 }
