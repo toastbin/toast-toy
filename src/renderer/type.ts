@@ -3,16 +3,16 @@ type VNodeTypes =
     | string
     | typeof TEXT
     | typeof COMMENT
-export interface ElementVnode {
+export interface VNode {
     type: VNodeTypes;
     // TODO on打头的推倒为方法
     props?: Record<string, string | (() => any) | boolean | Record<string, boolean> | (string | Record<string, boolean>)[]>
     /** 文本节点 or vnode */
-    children: string | ElementVnode[] | ComponentVnode[] | null
-    el?: Container | Text
+    children: string | VNode[] | ComponentVnode[] | null
+    el?: Container | Text | Comment
 }
 
-type RenderFunc = () => ElementVnode
+type RenderFunc = () => VNode
 
 export interface ComponentVnode {
     type: RenderFunc | {
@@ -22,7 +22,7 @@ export interface ComponentVnode {
 
 export type Container = HTMLElement & {
     /** 缓存的  vnode */
-    _vnode: ElementVnode
+    _vnode: VNode
     /** 事件处理 map */
     _event_invoker_map?: Record<string, {
         wrapper?: (ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any,
@@ -37,13 +37,15 @@ export type ElementEvent = keyof GlobalEventHandlersEventMap
 
 /** 渲染器选项 */
 export interface RendererOptions {
-    createElement: (tag: ElementVnode['type']) => Element
+    createElement: (tag: VNode['type']) => Element
     setElementText: (Container: El, text: string) => void
-    insert: (el: Container | Text, container: El) => void
+    insert: (el: VNode['el'], container: El) => void
     setEvent: (el: El, eventName: ElementEvent, listener: (ev: HTMLElementEventMap[keyof HTMLElementEventMap]) => any, options?: boolean | AddEventListenerOptions) => any
     patchProps: (el: El, name: string, preValue: PropsType | null, newValue: PropsType) => any
-    unmount: (vnode: ElementVnode) => void
+    unmount: (vnode: VNode) => void
     createTextNode: (text: string) => Text
+    createCommentNode: (comment: string) => Comment
+    setComment: (el: Comment, comment: string) => void
 }
 
 export type PropsType = string | boolean | (() => any) | Record<string, boolean> | (string | Record<string, boolean>)[]

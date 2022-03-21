@@ -69,5 +69,11 @@ export const domRenderOptions: RendererOptions = {
     },
     createTextNode(text) {
         return document.createTextNode(text)
+    },
+    createCommentNode(comment) {
+        return document.createComment(comment)
+    },
+    setComment(el, comment) {
+        el.data = comment
     }
 }

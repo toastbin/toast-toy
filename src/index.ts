@@ -1,30 +1,28 @@
 import { effect } from './reactivity'
 import { ref } from './reactivity/ref'
-import { createRenderer } from './renderer'
+import { COMMENT, createRenderer, TEXT } from './renderer'
 import { domRenderOptions } from './renderer/domRenderOptions'
-import { ElementVnode } from './renderer/type'
+import { VNode } from './renderer/type'
 
 const foo = ref<string>('foo')
 const renderer = createRenderer(domRenderOptions)
 const bool = ref<boolean>(false)
 
 effect(() => {
-    const vnode: ElementVnode = {
+    const vnode: VNode = {
         type: 'div',
         props: bool.value ? {
             onClick: () => console.log('outer click'),
         } : {},
         children: [
             {
-                type: 'span',
-                children: '1111',
-                props: {
-                    onClick: () => {
-                        bool.value = true
-                        console.log('inner click')
-                    }
-                }
+                type: TEXT,
+                children: '123123'
             },
+            {
+                type: COMMENT,
+                children: 'comment'
+            }
         ]
     }
     renderer.render(vnode, document.querySelector('#app'))

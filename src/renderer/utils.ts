@@ -1,10 +1,10 @@
-import { ElementVnode, ComponentVnode } from "./type"
+import { VNode, ComponentVnode } from "./type"
 
-export const isElementVnode = (vnode: ElementVnode | ComponentVnode): vnode is ElementVnode => {
+export const isElementVnode = (vnode: VNode | ComponentVnode): vnode is VNode => {
     return typeof vnode.type === 'string'
 }
 
-export const isComponentVnode = (vnode: ElementVnode | ComponentVnode): vnode is ComponentVnode => {
+export const isComponentVnode = (vnode: VNode | ComponentVnode): vnode is ComponentVnode => {
     return typeof vnode.type === 'function' || typeof vnode.type === 'object'
 }
 
