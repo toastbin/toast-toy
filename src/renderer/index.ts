@@ -1,6 +1,4 @@
-import { shouldSetAsProps } from './domRenderOptions';
-import type { VNode, ElementEvent, Container, RendererOptions, PropsType, El } from './type';
-import { normalizeClass } from './utils';
+import type { VNode, Container, RendererOptions, El } from './type';
 
 export const TEXT = Symbol('text')
 export const COMMENT = Symbol('comment')
