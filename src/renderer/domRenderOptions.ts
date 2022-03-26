@@ -1,3 +1,4 @@
+import { FRAGMENT } from ".";
 import { ElementEvent, RendererOptions } from "./type";
 import { normalizeClass } from "./utils";
 
@@ -62,6 +63,15 @@ export const domRenderOptions: RendererOptions = {
         }
     },
     unmount(vnode) {
+        // 卸载 fragment 类型
+        if (vnode.type === FRAGMENT) {
+            if (Array.isArray(vnode.children)) {
+                vnode.children.forEach((vn) => domRenderOptions.unmount(vn))
+            } else {
+                console.warn('Fragment children must be array')
+            }
+            return
+        }
         const parent = vnode.el.parentNode
         if (parent) {
             parent.removeChild(vnode.el)

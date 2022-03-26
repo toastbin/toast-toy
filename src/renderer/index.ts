@@ -2,6 +2,7 @@ import type { VNode, Container, RendererOptions, El } from './type';
 
 export const TEXT = Symbol('text')
 export const COMMENT = Symbol('comment')
+export const FRAGMENT = Symbol('fragment')
 
 /** 创建渲染器 */
 export const createRenderer = (options: RendererOptions) => {
@@ -81,8 +82,18 @@ export const createRenderer = (options: RendererOptions) => {
                     setComment(el as Comment, newVnode.children as string)
                 }
             }
-        } else if(typeof type === 'object') {
-            // 组件 vnode
+        } 
+        else if(type === FRAGMENT) {
+            // fragment
+            if (!oldVnode) {
+                if (Array.isArray(newVnode.children)) {
+                    newVnode.children.forEach((vn) => patch(null, vn, container))
+                } else {
+                    console.warn('Fragment children must be array')
+                }
+            } else {
+                patch(oldVnode, newVnode, container)
+            }
         } else {
             // 其他类型 vnode
         }

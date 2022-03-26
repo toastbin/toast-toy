@@ -1,6 +1,6 @@
 import { effect } from './reactivity'
 import { ref } from './reactivity/ref'
-import { COMMENT, createRenderer, TEXT } from './renderer'
+import { COMMENT, createRenderer, FRAGMENT, TEXT } from './renderer'
 import { domRenderOptions } from './renderer/domRenderOptions'
 import { VNode } from './renderer/type'
 
@@ -10,18 +10,15 @@ const bool = ref<boolean>(false)
 
 effect(() => {
     const vnode: VNode = {
-        type: 'div',
-        props: bool.value ? {
-            onClick: () => console.log('outer click'),
-        } : {},
+        type: FRAGMENT,
         children: [
             {
-                type: TEXT,
-                children: '123123'
+                type: 'li',
+                children: 'li1'
             },
             {
-                type: COMMENT,
-                children: 'comment'
+                type: 'li',
+                children: 'li2'
             }
         ]
     }

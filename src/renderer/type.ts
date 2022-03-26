@@ -1,8 +1,9 @@
-import { COMMENT, TEXT } from ".";
+import { COMMENT, FRAGMENT, TEXT } from ".";
 type VNodeTypes =
     | string
     | typeof TEXT
     | typeof COMMENT
+    | typeof FRAGMENT
 export interface VNode {
     type: VNodeTypes;
     // TODO on打头的推倒为方法
