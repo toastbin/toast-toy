@@ -12,7 +12,7 @@ export const domRenderOptions: RendererOptions = {
         return document.createElement(tag as string)
     },
     setElementText(el, text) {
-        el.appendChild(document.createTextNode(text))
+        el.textContent = text
     },
     insert(el, container) {
         container.appendChild(el)

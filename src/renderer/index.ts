@@ -82,8 +82,7 @@ export const createRenderer = (options: RendererOptions) => {
                     setComment(el as Comment, newVnode.children as string)
                 }
             }
-        } 
-        else if(type === FRAGMENT) {
+        } else if(type === FRAGMENT) {
             // fragment
             if (!oldVnode) {
                 if (Array.isArray(newVnode.children)) {
@@ -134,14 +133,30 @@ export const createRenderer = (options: RendererOptions) => {
         } else if (Array.isArray(newVnode.children)) {
             // 旧子节点也是数组
             if (Array.isArray(oldVnode.children)) {
-                // 卸载旧节点
-                oldVnode.children.forEach((c) => unmount(c))
+                const oldChildren = oldVnode.children
+                const newChildren = newVnode.children
+                const oldLen = oldChildren.length
+                const newLen = newChildren.length
+                const commonLen = Math.min(oldLen, newLen)
+                // 遍历共同浅 n 个
+                for (let i = 0; i < commonLen; i++) {
+                    patch(oldChildren[i], newChildren[i], container)
+                }
+                // 旧子节点长度大于新子节点长度，说明有旧节点需要卸载
+                if (oldLen > newLen) {
+                    for (let i = commonLen; i < oldLen; i++) {
+                        unmount(oldChildren[i])
+                    }
+                // 新子节点长度大于旧子节点长度，说明有新节点需要挂载
+                } else if (newLen > oldLen) {
+                    for (let i = commonLen; i < newLen; i++) {
+                        patch(null, newChildren[i], container)
+                    }
+                }
             // 旧子节点不是数组
             } else {
                 setElementText(container, '')
             }
-            // 挂载新节点
-            newVnode.children.forEach((c) => patch(null, c, container))
         // 新子节点不存在
         } else {
             // 旧子节点也是数组

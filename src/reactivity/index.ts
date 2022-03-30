@@ -41,7 +41,6 @@ interface ReactiveOptionsOptions {
 }
 
 const arrayInstrumentations = {}
-
     // 改写查找方法，用原始值做二次查找
     ; (['includes', 'indexOf', 'lastIndexOf'] as const).forEach(arrMethod => {
         const originArrMethod = Array.prototype[arrMethod]
@@ -295,7 +294,14 @@ const reactive = <T extends object>(data: T, options: ReactiveOptionsOptions = {
                 // 追踪依赖变化
                 track(target, key)
             }
-            const getRes = Reflect.get(target, key, receiver)
+
+            // TODO 临时解决响应式更新 dom 元素时 Illegal invocation 报错
+            let getRes: boolean;
+            if (target instanceof HTMLElement) {
+                getRes = Reflect.get(target, key)
+            } else {
+                getRes = Reflect.get(target, key, receiver)
+            }
             if (!shallow && typeof getRes === 'object' && getRes !== null) {
                 return reactive(getRes, options)
             }
@@ -321,7 +327,13 @@ const reactive = <T extends object>(data: T, options: ReactiveOptionsOptions = {
                     ? triggerType.SET
                     : triggerType.ADD
 
-            const setRes = Reflect.set(target, key, newVal, receiver)
+            // TODO 临时解决响应式更新 dom 元素时 Illegal invocation 报错
+            let setRes: boolean;
+            if (target instanceof HTMLElement) {
+                setRes = Reflect.set(target, key, newVal)
+            } else {
+                setRes = Reflect.set(target, key, newVal, receiver)
+            }
 
             // target 等于 __RAW__ 下面的原属数据，说明当前 receiver 就是 target 的代理对象
             if (target === receiver[__RAW__]) {

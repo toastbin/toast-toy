@@ -9,7 +9,7 @@ export interface VNode {
     // TODO on打头的推倒为方法
     props?: Record<string, string | (() => any) | boolean | Record<string, boolean> | (string | Record<string, boolean>)[]>
     /** 文本节点 or vnode */
-    children: string | VNode[] | ComponentVnode[] | null
+    children: string | VNode[] | null
     el?: Container | Text | Comment
 }
 
